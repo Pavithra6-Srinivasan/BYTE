@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Account Created!');
                     alert('Account created successfully!');
                     // Redirect to login page if needed
-                    // window.location.href = '/login';
+                    window.location.href = '/login';
+                    // }
                 } else {
                     console.error('Account Creation Failed:', data.message);
                     alert(`Account creation failed: ${data.message}`);
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Signed in successfully!');
                     // Redirect to a different page if needed
                     // window.location.href = '/dashboard';
+                    window.location.href = '/deposit';
                 } else {
                     console.error('Incorrect username or password:', data.message);
                     alert(`Login failed: ${data.message}`);
