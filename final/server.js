@@ -28,9 +28,13 @@ app.use(bodyParser.json());
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/deposit', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'deposit.html'));
+});
+
 
 // Serve the main page
-app.get('/', (req, res) => {
+app.get('/sign-up', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
 });
 
@@ -60,9 +64,11 @@ app.post('/sign-up', (req, res) => {
                         console.error('Error inserting into database:', err);
                         res.json({ success: false, message: 'Database error' });
                         return;
-                    }
+                    } 
                     res.json({ success: true, message: 'Account created successfully!' });
-                    res.redirect('/public/login');
+                    //res.redirect('/login.html');
+                    
+                    
                 });
             }
         });
@@ -88,7 +94,7 @@ app.post('/login', (req, res) => {
             res.json({ success: false, message: 'Database error' });
             return;
         }
-
+       
         if (results.length > 0) {
             res.json({ success: true, message: 'Login successful!' });
         } else {
@@ -96,6 +102,9 @@ app.post('/login', (req, res) => {
         }
     });
 });
+
+
+
 
 const PORT = 3001;
 app.listen(PORT, () => {
