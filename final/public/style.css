@@ -1,75 +1,132 @@
-body {
-    font-family: Bodoni;
-    background-color: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-  
-  h1 , h2 {
-    font-family: Bodoni;
-    text-align: center;
-    color: #712e90;
-    margin-bottom: 20px;
-  }
-  
-  .form {
-    margin-bottom: 15px;
-  }
-  
-  label {
-    display: block;
-    margin-bottom: 5px;
-    color: #000000;
-  }
-  
-  .container {
-    display: flex;
-    width: 80%;
-    max-width: 1200px;
-    overflow: hidden;
-  } 
-  
-  input[type="text"], input[type="email"], input[type="password"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #000000;
-    box-sizing: border-box;
-  }
-  
-  .btn {
-    width: 100%;
-    padding: 10px;
-    background-color: #8b5aa0;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    margin-bottom: 20px;
-  }
+ /*general*/
 
-  .btn:hover {
-    background-color: #712e90;
-  }
-  
-  .left-column {
-    color: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    flex: 1;
-  }
-  
-  .right-column {
-    padding: 200px;
-    flex: 2;
-  }
+.register {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+}
 
-  a {
-    text-decoration: none;
-  }
+h1 , h2 {
+  font-family: Bodoni;
+  text-align: center;
+  color: #712e90;
+  margin-bottom: 20px;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  background-color: #ffffff;
+  overflow-y: auto;
+}
+
+.content section {
+  margin-bottom: 60px;
+}
+
+.content section h1 {
+  font-size: 24px;
+}
+
+.content section p {
+  font-size: 18px;
+} 
+
+/*navigation*/
+
+.sidebar {
+  background-color: #8b5aa0;
+  font-size: 26px;
+  color: white;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+  width: 100%;
+}
+
+.sidebar ul li {
+  padding: 10px 0px;
+  width: 100%;
+  text-align: center;
+}
+
+.sidebar ul li a {
+  color: white;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar ul li a:hover {
+  background-color: #712e90;
+}
+
+  /*Profile Creation*/
+
+.form {
+  margin-bottom: 15px;
+}
+  
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #000000;
+}
+  
+.container {
+  display: flex;
+  width: 80%;
+  max-width: 2000px;
+  overflow: hidden;
+} 
+  
+input[type="text"], input[type="email"], input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #000000;
+  box-sizing: border-box;
+}
+  
+.btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #8b5aa0;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.btn:hover {
+  background-color: #712e90;
+}
+  
+.left-column {
+  color: #ffffff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  flex: 1;
+  padding-left: 150px;
+  padding-top: 130px;
+}
+  
+.right-column {
+  padding: 130px;
+  padding-bottom: 10px;
+  flex: 2;
+}
+
+a {
+  text-decoration: none;
+}
