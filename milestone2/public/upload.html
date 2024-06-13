@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="upload-container">
+      <h1>Upload Images</h1>
+      <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="images" multiple accept="image/*"><br><br>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+    <div class="url-container">
+      <h1>Add Image from URL</h1>
+      <form id="url-form">
+        <input type="url" name="url" placeholder="Enter image URL"><br><br>
+        <button type="submit">Add Image</button>
+      </form>
+    </div>
+    <div class="image-gallery" id="image-gallery">
+      <!-- Uploaded image folders will be displayed here -->
+    </div>
+    <div class="moodboard" id="moodboard">
+      <h2>Saved Moodboards</h2>
+      <button class="add-folder">+</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
+
