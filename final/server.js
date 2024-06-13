@@ -38,11 +38,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // account creation
-app.post('/sign-up', (req, res) => {
+app.post('/index', (req, res) => {
     const { username, email, password } = req.body;
 
     console.log('Create Account Request:', req.body);
@@ -77,11 +77,11 @@ app.post('/sign-up', (req, res) => {
     }
 });
         
-app.get('/index', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-app.post('/index', (req, res) => {
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     console.log('Login Request:', req.body);
@@ -136,7 +136,7 @@ passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.
 
 // Route for Google callback
 app.get('/auth/google/callback',
-passport.authenticate('google', { failureRedirect: '/index.html' }),
+passport.authenticate('google', { failureRedirect: '/login.html' }),
 (req, res) => {
   // Successful authentication, redirect to main website page
   res.redirect('/deposit.html');
@@ -146,7 +146,7 @@ passport.authenticate('google', { failureRedirect: '/index.html' }),
 // Route to handle logout
 app.get('/logout', (req, res) => {
 req.logout();
-res.redirect('/index.html');
+res.redirect('/login.html');
 });
 
 // Route to check if the user is logged in
