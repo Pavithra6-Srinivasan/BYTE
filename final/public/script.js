@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Account Created!');
                     alert('Account created successfully!');
                     // Redirect to login page
-                    window.location.href = '/login';
+                    window.location.href = '/index';
                 } else {
                     console.error('Account Creation Failed:', data.message);
                     alert(`Account creation failed: ${data.message}`);
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 // Send a POST request to log in
-                const response = await fetch('/login', {
+                const response = await fetch('/index', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
