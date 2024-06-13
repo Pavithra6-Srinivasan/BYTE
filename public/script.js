@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.success) {
                     console.log('Signed in!');
                     alert('Signed in successfully!');
-                    window.location.href = '/deposit.html';
+                    window.location.href = '/search.html';
                 } else {
                     console.error('Incorrect username or password:', data.message);
                     alert(`Login failed: ${data.message}`);
