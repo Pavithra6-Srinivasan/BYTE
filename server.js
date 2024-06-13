@@ -139,7 +139,7 @@ app.get('/auth/google/callback',
 passport.authenticate('google', { failureRedirect: '/login.html' }),
 (req, res) => {
   // Successful authentication, redirect to main website page
-  res.redirect('/deposit.html');
+  res.redirect('/search.html');
 }
 );
 
