@@ -1,0 +1,148 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  font-family: sans-serif;
+  background-color: #f9f9f9;
+}
+
+h1, h2 {
+  font-family: Arial;
+  text-align: center;
+  color: #712e90;
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333333;
+}
+
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.top-container {
+  width: 100%;
+  padding: 20px;
+  background-color: #f3e5f5;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.bottom-container {
+  width: 100%;
+  padding: 20px;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  box-sizing: border-box;
+}
+
+input[type="text"], input[type="email"], input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cccccc;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+
+.btn {
+  width: 100%;
+  padding: 10px;
+  background-color: #8b5aa0;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.btn:hover {
+  background-color: #712e90;
+}
+
+.upload-container, .url-container {
+  width: 300px;
+  margin: 20px;
+  padding: 20px;
+  border: 1px solid #cccccc;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 4px;
+}
+
+.image-folder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid #cccccc;
+  padding: 10px;
+  margin: 10px;
+  cursor: move;
+  background-color: #f3e5f5;
+  border-radius: 4px;
+  transition: width 0.3s, height 0.3s;
+}
+
+.image-folder img {
+  max-width: 100px;
+  max-height: 100px;
+  margin: 5px;
+  transition: max-width 0.3s, max-height 0.3s;
+}
+
+.image-gallery, .moodboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+  border: 1px solid #cccccc;
+  padding: 10px;
+  min-height: 150px;
+  background-color: #ffffff;
+  border-radius: 4px;
+}
+
+.moodboard {
+  border: 2px dashed #aaa;
+  position: relative;
+}
+
+.moodboard.over {
+  border-color: #712e90;
+}
+
+.add-folder {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.folder-name {
+  cursor: text;
+}
+
+a {
+  text-decoration: none;
+  color: #712e90;
+}
