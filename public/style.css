@@ -1,4 +1,4 @@
-  /*general*/
+  /*General*/
 
 .register {
   display: flex;
@@ -33,7 +33,7 @@ h1 , h2 {
   font-size: 18px;
 } 
 
-/*navigation*/
+  /*Navigation*/
 
 .sidebar {
   background-color: #8b5aa0;
@@ -129,4 +129,24 @@ input[type="text"], input[type="email"], input[type="password"] {
 
 a {
   text-decoration: none;
+}
+
+  /*New Moodboard*/
+  
+#moodboard {
+  display: flex;
+  flex-wrap: wrap;
+  border: 2px solid #712e90;
+  margin-top: 20px;
+  margin-left: auto;
+  width: 600px;
+  height: 400px;
+  position: relative;
+  background-color: #ffffff;
+}
+  
+.moodboard img {
+  cursor: move;
+  position: absolute;
+  transition: transform 0.2s;
 }
