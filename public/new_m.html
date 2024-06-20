@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <h1>BYTE</h1>
     <div class="container">
         <nav class="sidebar">
             <ul>
@@ -14,14 +15,31 @@
                 <li><a href="new_m.html">New Moodboard</a></li>
                 <li><a href="saved_m.html">Saved Moodboards</a></li>
             </ul>
+
+            <div class="extra">
+                <p>Upload Images</p>
+                <form id="upload-form" enctype="multipart/form-data">
+                  <input type="file" name="images" multiple accept="image/*"><br><br>
+                  <button type="submit">Upload</button>
+                </form>
+            </div>
+            <div class="extra">
+                <p>Add Image from URL</p>
+                <form id="url-form">
+                  <input type="url" name="url" placeholder="Enter image URL"><br><br>
+                  <button type="submit">Add Image</button>
+                </form>
+              </div>
+
+              <div class="image-gallery" id="image-gallery">
+                <!-- Uploaded image folders will be displayed here -->
+              </div>
+
         </nav>
-        <main class="content">
+        <main class="content"> 
             <section id="new-moodboard">
-                <h1>New Moodboard</h1>
-                <div>
-                    <input type="file" id="imageUpload" multiple>
-                    <div id="moodboard" class="moodboard"></div>
-                </div>
+                <h2>Create your New Moodboard</h2>
+                <div id="moodboard" class="moodboard"></div>
                 <script src="script.js"></script>
             </section>
         </main>
