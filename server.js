@@ -2,6 +2,10 @@ const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
+const multer = require('multer');
+const fs = require('fs');
+const sharp = require('sharp');
+const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
 const passport = require('passport');
@@ -161,3 +165,81 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+app.post('/upload', upload.array('images', 10), async (req, res) => {
+    const maxWidth = 800; // Maximum width of resized image
+    const maxHeight = 600; // Maximum height of resized image
+  
+    try {
+      const uploadPromises = req.files.map(async (file) => {
+        const imgPath = file.path;
+        const resizedImgBuffer = await resizeImage(imgPath, maxWidth, maxHeight);
+        const encodedImg = resizedImgBuffer.toString('base64');
+  
+        // Store image in MySQL
+        const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
+        return new Promise((resolve, reject) => {
+          db.query(sql, [folderId, encodedImg], (err, result) => {
+            if (err) reject(err);
+            resolve(`data:image/jpeg;base64,${encodedImg}`);
+          });
+        }).finally(() => {
+          // Asynchronously delete the uploaded file
+          fs.unlink(imgPath, (err) => {
+            if (err) {
+              console.error(`Failed to delete file: ${imgPath}`, err);
+            }
+          });
+        });
+      });
+  
+      const results = await Promise.all(uploadPromises);
+      res.json({ folderId, images: results });
+  
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error processing images');
+    }
+  });
+
+  // Route to add image from URL
+  app.post('/add-url-image', async (req, res) => {
+    const { url } = req.body;
+    
+    try {
+      const fetch = await import('node-fetch');
+      const response = await fetch.default(url); // Note the use of .default
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const encodedImg = buffer.toString('base64');
+  
+      // Store image in MySQL
+      const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
+      db.query(sql, [folderId, encodedImg], (err, result) => {
+        if (err) throw err;
+        res.json({ folderId, imageUrl: `data:image/jpeg;base64,${encodedImg}` });
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send('Error fetching image from URL');
+    }
+  });
+  
+  
+  // Route to delete folder
+  app.delete('/delete-folder/:folderId', (req, res) => {
+  const { folderId } = req.params;
+  const sql = 'DELETE FROM images WHERE folder_id = ?';
+  db.query(sql, [folderId], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('Error deleting folder');
+    }
+    res.send('Folder deleted');
+  });
+  });
+  
+  // Serve the HTML file
+  app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'new_m.html'));
+  });
