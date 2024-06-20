@@ -74,3 +74,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+if (uploadForm) {
+    uploadForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission
+
+      const formData = new FormData(event.target);
+      const response = await fetch('/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+      addImageFolder(data.folderId, data.images);
+    });
+  }
+
+  if (urlForm) {
+    urlForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission
+
+      const formData = new FormData(event.target);
+      const response = await fetch('/add-url-image', {
+        method: 'POST',
+        body: JSON.stringify({ url: formData.get('url') }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+      addImageFolder(data.folderId, [data.imageUrl]);
+    });
+  }
