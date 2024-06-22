@@ -1,11 +1,8 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
-const multer = require('multer');
-const fs = require('fs');
-const sharp = require('sharp');
-const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
 const passport = require('passport');
@@ -17,11 +14,15 @@ console.log(secretKey);
 
 const app = express();
 
+app.set('view engine', 'ejs');
+app.set('public', path.join(__dirname
+  , 'public'));
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'sqluser',
     password: 'password', 
-    database: 'byte'
+    database: 'byteusers'
 });
 
 db.connect((err) => {
@@ -32,21 +33,40 @@ db.connect((err) => {
     console.log('Connected to MySQL');
 });
 
+const storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ storage });
+
+  const resizeImage = (inputPath, maxWidth, maxHeight) => {
+    return sharp(inputPath)
+      .resize({ 
+        fit: 'inside',
+        width: maxWidth,
+        height: maxHeight,
+        withoutEnlargement: true
+      })
+      .toBuffer();
+  };
+  
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, '/public')));
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
 });
 
 // account creation
-app.post('/index', (req, res) => {
+app.post('/sign-up', (req, res) => {
     const { username, email, password } = req.body;
 
     console.log('Create Account Request:', req.body);
@@ -82,7 +102,7 @@ app.post('/index', (req, res) => {
 });
         
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.post('/login', (req, res) => {
@@ -143,7 +163,7 @@ app.get('/auth/google/callback',
 passport.authenticate('google', { failureRedirect: '/login.html' }),
 (req, res) => {
   // Successful authentication, redirect to main website page
-  res.redirect('/search.html');
+  res.redirect('/deposit.html');
 }
 );
 
@@ -165,81 +185,3 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-app.post('/upload', upload.array('images', 10), async (req, res) => {
-    const maxWidth = 800; // Maximum width of resized image
-    const maxHeight = 600; // Maximum height of resized image
-  
-    try {
-      const uploadPromises = req.files.map(async (file) => {
-        const imgPath = file.path;
-        const resizedImgBuffer = await resizeImage(imgPath, maxWidth, maxHeight);
-        const encodedImg = resizedImgBuffer.toString('base64');
-  
-        // Store image in MySQL
-        const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
-        return new Promise((resolve, reject) => {
-          db.query(sql, [folderId, encodedImg], (err, result) => {
-            if (err) reject(err);
-            resolve(`data:image/jpeg;base64,${encodedImg}`);
-          });
-        }).finally(() => {
-          // Asynchronously delete the uploaded file
-          fs.unlink(imgPath, (err) => {
-            if (err) {
-              console.error(`Failed to delete file: ${imgPath}`, err);
-            }
-          });
-        });
-      });
-  
-      const results = await Promise.all(uploadPromises);
-      res.json({ folderId, images: results });
-  
-    } catch (err) {
-      console.error(err);
-      res.status(500).send('Error processing images');
-    }
-  });
-
-  // Route to add image from URL
-  app.post('/add-url-image', async (req, res) => {
-    const { url } = req.body;
-    
-    try {
-      const fetch = await import('node-fetch');
-      const response = await fetch.default(url); // Note the use of .default
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const encodedImg = buffer.toString('base64');
-  
-      // Store image in MySQL
-      const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
-      db.query(sql, [folderId, encodedImg], (err, result) => {
-        if (err) throw err;
-        res.json({ folderId, imageUrl: `data:image/jpeg;base64,${encodedImg}` });
-      });
-    } catch (err) {
-      console.error(err);
-      res.status(500).send('Error fetching image from URL');
-    }
-  });
-  
-  
-  // Route to delete folder
-  app.delete('/delete-folder/:folderId', (req, res) => {
-  const { folderId } = req.params;
-  const sql = 'DELETE FROM images WHERE folder_id = ?';
-  db.query(sql, [folderId], (err, result) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).send('Error deleting folder');
-    }
-    res.send('Folder deleted');
-  });
-  });
-  
-  // Serve the HTML file
-  app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'new_m.html'));
-  });
