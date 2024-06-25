@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const multer = require('multer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 
@@ -13,11 +14,15 @@ console.log(secretKey);
 
 const app = express();
 
+app.set('view engine', 'ejs');
+app.set('public', path.join(__dirname
+  , 'public'));
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'sqluser',
     password: 'password', 
-    database: 'byte'
+    database: 'byteusers'
 });
 
 db.connect((err) => {
@@ -28,21 +33,40 @@ db.connect((err) => {
     console.log('Connected to MySQL');
 });
 
+const storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: (req, file, cb) => {
+      cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ storage });
+
+  const resizeImage = (inputPath, maxWidth, maxHeight) => {
+    return sharp(inputPath)
+      .resize({ 
+        fit: 'inside',
+        width: maxWidth,
+        height: maxHeight,
+        withoutEnlargement: true
+      })
+      .toBuffer();
+  };
+  
 
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, '/public')));
-
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve the main page
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
 });
 
 // account creation
-app.post('/index', (req, res) => {
+app.post('/sign-up', (req, res) => {
     const { username, email, password } = req.body;
 
     console.log('Create Account Request:', req.body);
@@ -78,7 +102,7 @@ app.post('/index', (req, res) => {
 });
         
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.post('/login', (req, res) => {
@@ -139,7 +163,7 @@ app.get('/auth/google/callback',
 passport.authenticate('google', { failureRedirect: '/login.html' }),
 (req, res) => {
   // Successful authentication, redirect to main website page
-  res.redirect('/search.html');
+  res.redirect('/deposit.html');
 }
 );
 
