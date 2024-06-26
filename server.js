@@ -19,24 +19,7 @@ console.log(secretKey);
 const app = express();
 
 app.set('view engine', 'ejs');
-app.set('public', path.join(__dirname
-  , 'public'));
-
-/*const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'sqluser',
-    password: 'password', 
-    database: 'byteusers'
-});
-
-db.connect((err) => {
-    if (err) {
-        console.error('Error connecting to MySQL:', err);
-        return;
-    }
-    console.log('Connected to MySQL');
-});
-*/
+app.set('public', path.join(__dirname , 'public'));
 
 const storage = multer.diskStorage({
     destination: './uploads/',
