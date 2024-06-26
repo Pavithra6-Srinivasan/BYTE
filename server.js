@@ -22,7 +22,7 @@ app.set('view engine', 'ejs');
 app.set('public', path.join(__dirname
   , 'public'));
 
-const db = mysql.createConnection({
+/*const db = mysql.createConnection({
     host: 'localhost',
     user: 'sqluser',
     password: 'password', 
@@ -36,7 +36,7 @@ db.connect((err) => {
     }
     console.log('Connected to MySQL');
 });
-
+*/
 const storage = multer.diskStorage({
     destination: './uploads/',
     filename: (req, file, cb) => {
@@ -130,8 +130,6 @@ app.post('/login', (req, res) => {
     });
 });
 
-
-
 // Example route to render product list
 app.get('/products', (req, res) => {
   const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'graphictees'";
@@ -200,7 +198,6 @@ app.post('/upload', upload.array('images', 10), async (req, res) => {
     res.status(500).send('Error processing images');
   }
 });
-
 
 // Route to add image from URL
 app.post('/add-url-image', async (req, res) => {
@@ -321,7 +318,7 @@ if (!req.isAuthenticated()) {
 res.send(req.user);
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
