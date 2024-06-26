@@ -22,7 +22,7 @@ app.set('view engine', 'ejs');
 app.set('public', path.join(__dirname
   , 'public'));
 
-const db = mysql.createConnection({
+/*const db = mysql.createConnection({
     host: 'localhost',
     user: 'sqluser',
     password: 'password', 
@@ -36,6 +36,7 @@ db.connect((err) => {
     }
     console.log('Connected to MySQL');
 });
+*/
 
 const storage = multer.diskStorage({
     destination: './uploads/',
