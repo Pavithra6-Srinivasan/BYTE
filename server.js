@@ -6,8 +6,6 @@ const mysql = require('mysql2');
 const fs = require('fs');
 const sharp = require('sharp');
 
-
-
 const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
@@ -205,8 +203,6 @@ app.post('/upload', upload.array('images', 10), async (req, res) => {
 
 
 // Route to add image from URL
-// Route to add image from URL
-// Route to add image from URL
 app.post('/add-url-image', async (req, res) => {
   const { url } = req.body;
   
@@ -228,7 +224,6 @@ app.post('/add-url-image', async (req, res) => {
     res.status(500).send('Error fetching image from URL');
   }
 });
-
 
 // Route to delete folder
 app.delete('/delete-folder/:folderId', (req, res) => {
@@ -329,4 +324,27 @@ res.send(req.user);
 const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+const url = require('url');
+
+const dbUrl = process.env.JAWSDB_URL;
+const connectionParams = url.parse(dbUrl);
+
+const [username, password] = connectionParams.auth.split(':');
+
+const connection = mysql.createConnection({
+  host: connectionParams.hostname,
+  user: username,
+  password: password,
+  database: connectionParams.pathname.substr(1),
+  port: connectionParams.port
+});
+
+connection.connect(err => {
+  if (err) {
+    console.error('Error connecting to MySQL:', err.stack);
+    return;
+  }
+  console.log('Connected to MySQL as ID', connection.threadId);
 });
