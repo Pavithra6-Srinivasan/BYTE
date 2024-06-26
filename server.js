@@ -162,7 +162,6 @@ app.get('/products2', (req, res) => {
   });
 });
 
-
 app.post('/upload', upload.array('images', 10), async (req, res) => {
   const maxWidth = 800; // Maximum width of resized image
   const maxHeight = 600; // Maximum height of resized image
@@ -323,25 +322,14 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-const url = require('url');
+const mysql = require('mysql2/promise');
 
-const dbUrl = process.env.JAWSDB_URL;
-const connectionParams = url.parse(dbUrl);
-
-const [username, password] = connectionParams.auth.split(':');
-
-const connection = mysql.createConnection({
-  host: connectionParams.hostname,
-  user: username,
-  password: password,
-  database: connectionParams.pathname.substr(1),
-  port: connectionParams.port
-});
-
-connection.connect(err => {
-  if (err) {
-    console.error('Error connecting to MySQL:', err.stack);
-    return;
-  }
-  console.log('Connected to MySQL as ID', connection.threadId);
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
