@@ -318,12 +318,10 @@ if (!req.isAuthenticated()) {
 res.send(req.user);
 });
 
-const PORT = process.env.PORT || 3000;
+/*const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-const mysql = require('mysql2/promise');
+});*/
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
