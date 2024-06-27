@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
 const sharp = require('sharp');
-
+const mongoose = require('mongoose');
 const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
