@@ -94,7 +94,7 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.post('/login', (req, res) => {
+/*app.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     console.log('Login Request:', req.body);
@@ -112,12 +112,25 @@ app.post('/login', (req, res) => {
             res.json({ success: false, message: 'Invalid credentials' });
         }
     });
+}); */
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const [rows, fields] = await db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
+    if (rows.length > 0) {
+      res.send('Login successful');
+    } else {
+      res.status(401).send('Invalid credentials');
+    }
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
 
 // Example route to render product list
 app.get('/products', (req, res) => {
   const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'graphictees'";
-
 
   db.query(query, (error, results) => {
     if (error) {
@@ -314,4 +327,20 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
+});
+
+const MongoStore = require('connect-mongo');
+
+app.use(session({
+  secret: require('crypto').randomBytes(64).toString('hex'),
+  resave: false,
+  saveUninitialized: true,
+  store: MongoStore.create({ mongoUrl: 'mongodb://your-mongo-url' })
+}));
+
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
