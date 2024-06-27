@@ -340,7 +340,7 @@ app.use(session({
   secret: require('crypto').randomBytes(64).toString('hex'),
   resave: false,
   saveUninitialized: true,
-  store: MongoStore.create({ mongoUrl: mongoURL })
+  store: MongoStore.create({ mongoUrl: 'mongodb://mongoURL' })
 }));
 
 const db = mysql.createPool({
