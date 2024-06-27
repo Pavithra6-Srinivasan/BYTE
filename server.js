@@ -330,12 +330,17 @@ const pool = mysql.createPool({
 });
 
 const MongoStore = require('connect-mongo');
+const mongoURL = process.env.MONGO_URL;
+
+mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 app.use(session({
   secret: require('crypto').randomBytes(64).toString('hex'),
   resave: false,
   saveUninitialized: true,
-  store: MongoStore.create({ mongoUrl: 'mongodb://your-mongo-url' })
+  store: MongoStore.create({ mongoUrl: mongoURL })
 }));
 
 const db = mysql.createPool({
