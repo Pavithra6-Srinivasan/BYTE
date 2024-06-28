@@ -1,11 +1,11 @@
-/*const express = require('express');
+const express = require('express');
 const path = require('path');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
 const sharp = require('sharp');
-const mongoose = require('mongoose');
+
 const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
@@ -41,7 +41,6 @@ const storage = multer.diskStorage({
       .toBuffer();
   };
   
-
 // Middleware to parse JSON
 app.use(bodyParser.json());
 
@@ -94,18 +93,24 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.post('/login', async (req, res) => {
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  try {
-    const [rows, fields] = await db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-    if (rows.length > 0) {
-      res.send('Login successful');
-    } else {
-      res.status(401).send('Invalid credentials');
-    }
-  } catch (err) {
-    res.status(500).send('Server error');
-  }
+
+  console.log('Login Request:', req.body);
+
+  const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
+  db.query(query, [username, password], (err, results) => {
+      if (err) {
+          console.error('Error querying database:', err);
+          res.json({ success: false, message: 'Database error' });
+          return;
+      }
+      if (results.length > 0) {
+          res.json({ success: true, message: 'Login successful!' });
+      } else {
+          res.json({ success: false, message: 'Invalid credentials' });
+      }
+  });
 });
 
 // Example route to render product list
@@ -216,11 +221,11 @@ app.get('/upload', (req, res) => {
 res.sendFile(path.join(__dirname, 'public', 'upload.html'));
 });
 
-app.use(session({
+/*app.use(session({
     secret: 'secretKey',
     resave: false,
     saveUninitialized: true
-  }));
+  }));*/
   
   // Passport middleware
   app.use(passport.initialize());
@@ -277,7 +282,7 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-const pool = mysql.createPool({
+/*const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -286,20 +291,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0
 });
-
-const MongoStore = require('connect-mongo');
-const mongoURL = process.env.MONGO_URL;
-
-mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-app.use(session({
-  secret: require('crypto').randomBytes(64).toString('hex'),
-  resave: false,
-  saveUninitialized: true,
-  store: MongoStore.create({ mongoUrl: 'mongodb://mongoURL' })
-}));
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -307,269 +298,3 @@ const db = mysql.createPool({
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 });*/
-
-const express = require('express');
-const path = require('path');
-const multer = require('multer');
-const bodyParser = require('body-parser');
-const mysql = require('mysql2/promise'); // Changed to use promise-based API for async/await
-const fs = require('fs');
-const sharp = require('sharp');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const crypto = require('crypto');
-const secretKey = crypto.randomBytes(32).toString('hex');
-const fetch = require('node-fetch'); // moved this to the top for clarity
-
-console.log(secretKey);
-
-const app = express();
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'public')); // Corrected from 'public' to 'views' if necessary
-
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ storage });
-
-const resizeImage = (inputPath, maxWidth, maxHeight) => {
-  return sharp(inputPath)
-    .resize({ 
-      fit: 'inside',
-      width: maxWidth,
-      height: maxHeight,
-      withoutEnlargement: true
-    })
-    .toBuffer();
-};
-
-// Middleware to parse JSON
-app.use(bodyParser.json());
-
-// Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
-
-// MySQL connection pool
-const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Serve the main page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
-});
-
-// Account creation
-app.post('/sign-up', async (req, res) => {
-  const { username, email, password } = req.body;
-
-  console.log('Create Account Request:', req.body);
-
-  if (username && email && password) {
-    try {
-      const [results] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-      if (results.length > 0) {
-        res.json({ success: false, message: 'Username already taken' });
-      } else {
-        await db.query('INSERT INTO users (username, email, password) VALUES (?, ?, ?)', [username, email, password]);
-        res.json({ success: true, message: 'Account created successfully!' });
-      }
-    } catch (err) {
-      console.error('Error querying/inserting database:', err);
-      res.json({ success: false, message: 'Database error' });
-    }
-  } else {
-    res.json({ success: false, message: 'Invalid input data' });
-  }
-});
-
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const [rows] = await db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-    if (rows.length > 0) {
-      res.send('Login successful');
-    } else {
-      res.status(401).send('Invalid credentials');
-    }
-  } catch (err) {
-    console.error('Server error:', err);
-    res.status(500).send('Server error');
-  }
-});
-
-app.get('/products', async (req, res) => {
-  const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'graphictees'";
-  try {
-    const [results] = await db.query(query);
-    res.render('products', { products: results });
-  } catch (error) {
-    console.error('Error fetching cotton:', error);
-    res.status(500).send('Error fetching cottonon');
-  }
-});
-
-app.get('/products2', async (req, res) => {
-  const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'tops'";
-  try {
-    const [results] = await db.query(query);
-    res.render('products2', { products2: results });
-  } catch (error) {
-    console.error('Error fetching cotton:', error);
-    res.status(500).send('Error fetching cottonon');
-  }
-});
-
-app.post('/upload', upload.array('images', 10), async (req, res) => {
-  const maxWidth = 800; // Maximum width of resized image
-  const maxHeight = 600; // Maximum height of resized image
-  const folderId = `folder-${Date.now()}`;
-
-  try {
-    const uploadPromises = req.files.map(async (file) => {
-      const imgPath = file.path;
-      const resizedImgBuffer = await resizeImage(imgPath, maxWidth, maxHeight);
-      const encodedImg = resizedImgBuffer.toString('base64');
-
-      // Store image in MySQL
-      const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
-      await db.query(sql, [folderId, encodedImg]);
-
-      // Asynchronously delete the uploaded file
-      fs.unlink(imgPath, (err) => {
-        if (err) {
-          console.error(`Failed to delete file: ${imgPath}`, err);
-        }
-      });
-
-      return `data:image/jpeg;base64,${encodedImg}`;
-    });
-
-    const results = await Promise.all(uploadPromises);
-    res.json({ folderId, images: results });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error processing images');
-  }
-});
-
-app.post('/add-url-image', async (req, res) => {
-  const { url } = req.body;
-  const folderId = `folder-${Date.now()}`;
-
-  try {
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const encodedImg = buffer.toString('base64');
-
-    // Store image in MySQL
-    const sql = 'INSERT INTO images (folder_id, img) VALUES (?, ?)';
-    await db.query(sql, [folderId, encodedImg]);
-    res.json({ folderId, imageUrl: `data:image/jpeg;base64,${encodedImg}` });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error fetching image from URL');
-  }
-});
-
-app.delete('/delete-folder/:folderId', async (req, res) => {
-  const { folderId } = req.params;
-  try {
-    const sql = 'DELETE FROM images WHERE folder_id = ?';
-    await db.query(sql, [folderId]);
-    res.send('Folder deleted');
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error deleting folder');
-  }
-});
-
-app.get('/upload', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-});
-
-app.use(session({
-  secret: 'secretKey', // Consider using an environment variable for security
-  resave: false,
-  saveUninitialized: true
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
-});
-
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: 'http://localhost:3000/auth/google/callback'
-},
-(token, tokenSecret, profile, done) => {
-  return done(null, profile);
-}));
-
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login', 'email'] })
-);
-
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login.html' }),
-  (req, res) => {
-    res.redirect('/deposit.html');
-  }
-);
-
-app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/login.html');
-});
-
-app.get('/profile', (req, res) => {
-  if (!req.isAuthenticated()) {
-    return res.status(401).send('You are not authenticated');
-  }
-  res.send(req.user);
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-const mongoURL = process.env.MONGO_URL;
-
-mongoose.connect(mongoURL, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-app.use(session({
-  secret: crypto.randomBytes(64).toString('hex'), // Ensure this is consistent across sessions
-  resave: false,
-  saveUninitialized: true,
-  store: MongoStore.create({ mongoUrl: mongoURL })
-}));
