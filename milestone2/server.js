@@ -132,21 +132,37 @@ app.post('/login', (req, res) => {
     });
 });
 
-const baseURL = 'https://books.toscrape.com/'; // Replace with your actual base URL
+
 
 // Example route to render product list
 app.get('/products', (req, res) => {
-  const query = 'SELECT title, price, imageURL, availability FROM products';
+  const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'graphictees'";
+
 
   db.query(query, (error, results) => {
     if (error) {
-      console.error('Error fetching products:', error);
-      res.status(500).send('Error fetching products');
+      console.error('Error fetching cotton:', error);
+      res.status(500).send('Error fetching cottonon');
       return;
     }
 
     // Render product-list.ejs with products data
-    res.render('product-list', { baseURL: baseURL, products: results });
+    res.render('products', { products: results });
+  });
+});
+
+app.get('/products2', (req, res) => {
+  const query = "SELECT title, pricing, img, colour, urlpg FROM cottonon WHERE category = 'tops'";
+
+  db.query(query, (error, results) => {
+    if (error) {
+      console.error('Error fetching cotton:', error);
+      res.status(500).send('Error fetching cottonon');
+      return;
+    }
+
+    // Render product-list.ejs with products data
+    res.render('products2', { products2: results });
   });
 });
 
@@ -232,6 +248,27 @@ app.get('/upload', (req, res) => {
 res.sendFile(path.join(__dirname, 'public', 'upload.html'));
 });
 
+// app.post('/save-images', (req, res) => {
+//   const images = req.body.images;
+
+//   if (!images || !Array.isArray(images)) {
+//       return res.status(400).json({ error: 'Invalid images data' });
+//   }
+
+//   // Example SQL query to insert images into a table
+//   const insertQuery = 'INSERT INTO user_items (user_id, item_id) VALUES ?';
+
+//   const values = images.map(image => [image]);
+
+//   db.query(insertQuery, [values], (err, result) => {
+//       if (err) {
+//           console.error('Error inserting images:', err);
+//           return res.status(500).json({ error: 'Failed to save images' });
+//       }
+//       console.log('Images inserted successfully');
+//       res.json({ message: 'Images saved successfully' });
+//   });
+// });
 
 
 app.use(session({
@@ -290,7 +327,7 @@ if (!req.isAuthenticated()) {
 res.send(req.user);
 });
 
-const PORT = 3000;
+const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
