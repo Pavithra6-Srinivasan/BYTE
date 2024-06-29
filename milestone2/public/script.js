@@ -1,9 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const signUp = document.getElementById('sign-up-form');
     const loginForm = document.getElementById('login-form');
+    const saveForm = document.getElementById('save-form');
     const uploadForm = document.getElementById('upload-form');
     const urlForm = document.getElementById('url-form');
     const productsForm = document.getElementById('products-form');
+   
     
     // Account creation
     if (signUp) {
@@ -77,159 +79,212 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     // script.js
+//----------------------upload script--------------------------------------------------------
 
+
+  const moodboard = document.getElementById('moodboard');
 
   if (uploadForm) {
-    uploadForm.addEventListener('submit', async (event) => {
-      event.preventDefault(); // Prevent default form submission
+      uploadForm.addEventListener('submit', (event) => {
+          event.preventDefault(); // Prevent default form submission
 
-      const formData = new FormData(event.target);
-      const response = await fetch('/upload', {
-        method: 'POST',
-        body: formData,
+          const files = event.target.images.files;
+          if (files.length > 0) {
+              Array.from(files).forEach(file => {
+                  const reader = new FileReader();
+                  reader.onload = function(e) {
+                      addImageToMoodboard(e.target.result);
+                  };
+                  reader.readAsDataURL(file);
+              });
+          }
       });
-
-      const data = await response.json();
-      addImageFolder(data.folderId, data.images);
-    });
   }
 
   if (urlForm) {
-    urlForm.addEventListener('submit', async (event) => {
-      event.preventDefault(); // Prevent default form submission
+    urlForm.addEventListener('submit', (event) => {
+        event.preventDefault(); // Prevent default form submission
 
-      const formData = new FormData(event.target);
-      const response = await fetch('/add-url-image', {
-        method: 'POST',
-        body: JSON.stringify({ url: formData.get('url') }),
-        headers: {
-          'Content-Type': 'application/json'
+        const urlInput = event.target.url; // Get the URL input element
+        const url = urlInput.value.trim(); // Get and trim the entered URL
+
+        if (url) {
+            addImageToMoodboard(url);
+            urlInput.value = ''; // Clear the URL input field
         }
-      });
-
-      const data = await response.json();
-      addImageFolder(data.folderId, [data.imageUrl]);
     });
-  }
+}
 
-  function addImageFolder(folderId, images) {
-    const imageGallery = document.getElementById('image-gallery');
-    const folder = document.createElement('div');
-    folder.classList.add('image-folder');
-    folder.setAttribute('draggable', true);
-    folder.dataset.folderId = folderId;
-    folder.addEventListener('dragstart', handleDragStart);
-    folder.addEventListener('dragend', handleDragEnd);
 
-    const folderName = document.createElement('div');
-    folderName.classList.add('folder-name');
-    folderName.textContent = `Folder ${folderId}`;
-    folder.appendChild(folderName);
-
-    images.forEach((imageUrl) => {
+  // Function to add an image to the moodboard
+  function addImageToMoodboard(imageUrl) {
       const img = document.createElement('img');
       img.src = imageUrl;
-      folder.appendChild(img);
-    });
-
-    imageGallery.appendChild(folder);
+      img.classList.add('moodboard-image'); // Add class for styling
+      img.setAttribute('draggable', true);
+      img.addEventListener('dragstart', handleDragStart);
+      img.addEventListener('dragend', handleDragEnd);
+      img.style.position = 'absolute'; // Allow positioning within moodboard
+      img.addEventListener('mousedown', handleImageMouseDown); // Add event listener for resizing
+      moodboard.appendChild(img);
   }
 
+  // Drag and drop functionality
   function handleDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.outerHTML);
-    e.dataTransfer.setData('folderId', e.target.dataset.folderId);
-    setTimeout(() => {
-      e.target.style.display = 'none';
-    }, 0);
+      e.dataTransfer.setData('text/plain', ''); // Set empty data to initiate drag
+      e.dataTransfer.setDragImage(e.target, 0, 0); // Set the image itself as drag image
+      e.target.classList.add('dragging');
+      e.dataTransfer.setData('text/html', e.target.outerHTML); // Set the dragged element's HTML
   }
 
   function handleDragEnd(e) {
-    e.target.style.display = 'block';
+      e.target.style.opacity = ''; // Reset opacity of dragged element
+      e.target.classList.remove('dragging');
   }
 
   function handleDragOver(e) {
-    e.preventDefault();
-    e.target.classList.add('over');
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
   }
 
-  function handleDragLeave(e) {
-    e.target.classList.remove('over');
-  }
+  function handleDrop(e) {
+      e.preventDefault();
+      const dragging = document.querySelector('.dragging');
+      if (dragging && e.target.closest('#moodboard')) {
+          const moodboardRect = moodboard.getBoundingClientRect();
+          const offsetX = e.clientX - moodboardRect.left - dragging.offsetWidth / 2;
+          const offsetY = e.clientY - moodboardRect.top - dragging.offsetHeight / 2;
 
-  async function handleDrop(e) {
-    e.preventDefault();
-    e.target.classList.remove('over');
-    const data = e.dataTransfer.getData('text/plain');
-    const folderId = e.dataTransfer.getData('folderId');
-    const dropTarget = e.target.closest('.moodboard');
-
-    if (dropTarget) {
-      dropTarget.insertAdjacentHTML('beforeend', data);
-      const newFolder = dropTarget.lastChild;
-      newFolder.addEventListener('dragstart', handleDragStart);
-      newFolder.addEventListener('dragend', handleDragEnd);
-
-      // Resize images when dropped into a folder
-      const images = newFolder.querySelectorAll('img');
-      images.forEach(img => {
-        img.style.maxWidth = '150px';
-        img.style.maxHeight = '150px';
-      });
-
-      // Increase folder size to accommodate images
-      newFolder.style.minWidth = '200px';
-      newFolder.style.minHeight = '200px';
-
-      // Remove the folder from the gallery
-      const folderToRemove = document.querySelector(`.image-folder[data-folder-id='${folderId}']`);
-      if (folderToRemove) {
-        folderToRemove.remove();
+          dragging.style.left = `${offsetX}px`;
+          dragging.style.top = `${offsetY}px`;
       }
+  }
 
-      // Delete folder from database
-      try {
-        const response = await fetch(`/delete-folder/${folderId}`, {
-          method: 'DELETE'
-        });
+  // Resize functionality
+  function handleImageMouseDown(e) {
+      const image = e.target;
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+      const imageRect = image.getBoundingClientRect();
 
-        if (!response.ok) {
-          throw new Error('Failed to delete folder');
-        }
-        console.log('Folder deleted');
-      } catch (err) {
-        console.error(err);
+      // Calculate positions of corners
+      const topLeft = {
+          x: imageRect.left,
+          y: imageRect.top
+      };
+      const bottomRight = {
+          x: imageRect.right,
+          y: imageRect.bottom
+      };
+
+      // Check if mouse click is within a resize handle area
+      const resizeHandleSize = 10; // Adjust size as needed
+      const withinTopLeft = mouseX >= topLeft.x && mouseX <= topLeft.x + resizeHandleSize &&
+                            mouseY >= topLeft.y && mouseY <= topLeft.y + resizeHandleSize;
+      const withinBottomRight = mouseX >= bottomRight.x - resizeHandleSize && mouseX <= bottomRight.x &&
+                                mouseY >= bottomRight.y - resizeHandleSize && mouseY <= bottomRight.y;
+
+      if (withinTopLeft || withinBottomRight) {
+          document.addEventListener('mousemove', handleImageResize);
+          document.addEventListener('mouseup', () => {
+              document.removeEventListener('mousemove', handleImageResize);
+          });
       }
-    }
   }
+  function saveMoodboard() {
+    const moodboardImages = Array.from(moodboard.querySelectorAll('.moodboard-image')).map(img => img.src);
+    localStorage.setItem('newMoodboardImages', JSON.stringify(moodboardImages));
+    alert('Moodboard saved');
 
-  function createNewFolder() {
-    const moodboard = document.getElementById('moodboard');
-    const newFolder = document.createElement('div');
-    newFolder.classList.add('image-folder');
-    newFolder.setAttribute('draggable', true);
-    newFolder.dataset.folderId = `folder-${Date.now()}`;
-    newFolder.addEventListener('dragstart', handleDragStart);
-    newFolder.addEventListener('dragend', handleDragEnd);
+}
+saveButton.addEventListener('click', saveMoodboard);
 
-    const folderName = document.createElement('div');
-    folderName.classList.add('folder-name');
-    folderName.contentEditable = true;
-    folderName.textContent = 'New Folder';
-    newFolder.appendChild(folderName);
+  function handleImageResize(event) {
+      const image = document.querySelector('.moodboard-image');
+      if (!image) return;
 
-    moodboard.appendChild(newFolder);
+      const mouseX = event.clientX;
+      const mouseY = event.clientY;
+      const imageRect = image.getBoundingClientRect();
+      const initialWidth = image.offsetWidth;
+      const initialHeight = image.offsetHeight;
+
+      if (mouseX < imageRect.left + image.offsetWidth / 2) {
+          // Resize from left/top corner
+          const newWidth = initialWidth - (mouseX - imageRect.left);
+          const newHeight = initialHeight - (mouseY - imageRect.top);
+          image.style.width = `${newWidth}px`;
+          image.style.height = `${newHeight}px`;
+          image.style.left = `${mouseX}px`;
+          image.style.top = `${mouseY}px`;
+      } else {
+          // Resize from right/bottom corner
+          const newWidth = initialWidth + (mouseX - imageRect.right);
+          const newHeight = initialHeight + (mouseY - imageRect.bottom);
+          image.style.width = `${newWidth}px`;
+          image.style.height = `${newHeight}px`;
+      }
   }
+  const newMoodboardImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
+  newMoodboardImages.forEach(imageUrl => {
+      addImageToMoodboard(imageUrl);
+  });
 
-  document.querySelector('.add-folder').addEventListener('click', createNewFolder);
-
-  const moodboard = document.getElementById('moodboard');
+  // Event listeners for drag and drop
   moodboard.addEventListener('dragover', handleDragOver);
-  moodboard.addEventListener('dragleave', handleDragLeave);
   moodboard.addEventListener('drop', handleDrop);
-});
 
-  if (productsForm) {
+
+///////////////////////////////----------end copy---------///////////////////////////////////
+
+//------------------------save-all-images-to-database-----------------------------------
+
+
+
+if (saveForm) {
+  saveForm.addEventListener('submit', (event) => {
+      event.preventDefault(); // Prevent default form submission
+
+
+function extractImagesFromPage() {
+  const images = Array.from(document.querySelectorAll('img')).map(img => img.src);
+  return images;
+}
+
+// Example function to send images to the server
+function sendImagesToServer(images) {
+  fetch('/save-images', {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ images })
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Failed to save images');
+      }
+      return response.json();
+  })
+  .then(data => {
+      console.log('Images saved successfully:', data);
+  })
+  .catch(error => {
+      console.error('Error saving images:', error);
+  });
+}
+const images = extractImagesFromPage();
+sendImagesToServer(images);
+
+  })};
+
+//---------products script--------------------------------------------------------
+  
+
+if (productsForm) {
     // Fetch product data from the server when the page loads
+    productsForm.addEventListener('submit', async (event) => {
+      event.preventDefault(); // Prevent default form submission
     fetch('/products')
         .then(response => {
             if (!response.ok) {
@@ -244,32 +299,54 @@ document.addEventListener('DOMContentLoaded', () => {
         .catch(error => {
             console.error('Error fetching product data:', error);
         });
-}
+
+     fetch('/products2')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Display product data on the page
+            displayProducts(data);
+        })
+        .catch(error => {
+            console.error('Error fetching product data:', error);
+        });
+
 
 function displayProducts(products) {
     const productList = document.getElementById('product-list');
+    
 
     // Clear any existing product items
     productList.innerHTML = '';
+   
 
     // Iterate over each product and create HTML elements to display them
     products.forEach(product => {
         const productItem = document.createElement('div');
         productItem.classList.add('product-item');
 
+      
+
         const title = document.createElement('h3');
         title.textContent = product.title;
 
-        const price = document.createElement('p');
-        price.textContent = `Price: ${product.price}`;
+        const pricing = document.createElement('p');
+        pricing.textContent = `Pricing: ${product.pricing}`;
 
-        const availability = document.createElement('p');
-        availability.textContent = `Availability: ${product.availability}`;
+        const colour= document.createElement('p');
+        colour.textContent = `colour: ${product.colour}`;
 
         productItem.appendChild(title);
-        productItem.appendChild(price);
-        productItem.appendChild(availability);
+        productItem.appendChild(pricing);
+        productItem.appendChild(colour);
 
         productList.appendChild(productItem);
-    });
-};
+       
+    })}
+
+  })};
+});
