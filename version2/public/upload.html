@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Moodboard</title>
+    
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="stylebackup.css">
+</head>
+<body>
+    <h1>BYTE</h1>
+    <div class="container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="products">SEARCH</a></li>
+                <li><a href="new_m.html">NEW MOODBOARD</a></li>
+                <li><a href="saved_m.html">SAVED MOODBOARDS</a></li>
+            </ul>
+
+            <div class="upload">
+                <p>Upload Images</p>
+                <form style="padding-left: 60px;"  id="upload-form" enctype="multipart/form-data">
+                    <input type="file" name="images" multiple accept="image/*"><br><br>
+                    <button class="boxbtn" type="submit">Upload</button>
+                </form>
+            </div>
+            <div class="URL">
+                <p>Add Image from URL</p>
+                <form id="url-form">
+                    <input type="url" name="url" placeholder="Enter image URL"><br><br>
+                    <button class="boxbtn" style="width: 65%; margin-left: 25px;" type="submit">Add Image</button>
+                </form>
+            </div>
+            
+            <!-- <div class="image-gallery" id="image-gallery"></div> -->
+        </nav>
+        <main class="content"> 
+            <section id="new-moodboard">
+                <!-- <h2 style="font-size:30px;">Create your New Moodboard</h2> -->
+                <div id="moodboard" class="moodboard"></div>
+            <button class="savebtn" type="button" id="save-button">SAVE</button>
+        </section>
+        </main>
+    </div>
+    <script src = "script.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script>
+    <script>
+    //     $( function() {
+    //   $( ".moodboard-image" ).resizable();
+    // } );
+    </script>
+    
+</body>
+</html>
