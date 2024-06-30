@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Moodboards</title>
+    <link rel="stylesheet" href="stylebackup.css">
+    <style>
+        .moodboard-box {
+            border: 1px solid #ccc;
+            margin: 10px;
+            padding: 10px;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 2px 2px 12px rgba(0,0,0,0.1);
+        }
+        .moodboard-box h3 {
+            text-align: center;
+        }
+        .moodboard-box .images-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .moodboard-box img {
+            width: 150px;
+            height: 150px;
+            margin: 5px;
+            object-fit: contain; /* Ensures the image covers the specified dimensions without distortion */
+        }
+    </style>
+</head>
+<body>
+    <h1>BYTE</h1>
+    <div class="container">
+        <nav class="sidebar">
+            <ul>
+               <li><a href="/graphic-tees">SEARCH</a></li>
+               <li><a href="upload.html">NEW MOODBOARD</a></li>
+               <li><a href="saved.html">SAVED MOODBOARDS</a></li>
+            </ul>
+        </nav>
+        <main class="content">
+            <section id="saved-moodboards">
+                <h1>Saved Moodboards</h1>
+                <div id="saved-moodboards-container"></div>
+            </section>
+        </main>
+    </div>
+    <script>
+        const username = localStorage.getItem('username');
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch(`/list-moodboards/${username}`)
+                .then(response => response.json())
+                .then(moodboards => {
+                    const savedMoodboardsContainer = document.getElementById('saved-moodboards-container');
+                    moodboards.forEach(name => {
+                        const moodboardBox = document.createElement('div');
+                        moodboardBox.classList.add('moodboard-box');
+                        moodboardBox.innerHTML = `<h3>${name}</h3><div class="images-container"></div>`;
+                        savedMoodboardsContainer.appendChild(moodboardBox);
+
+                        fetch(`/moodboard/${username}/${name}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.images && data.images.length > 0) {
+                                    const imagesContainer = moodboardBox.querySelector('.images-container');
+                                    data.images.forEach(imageUrl => {
+                                        const img = document.createElement('img');
+                                        img.src = imageUrl;
+                                        imagesContainer.appendChild(img);
+                                    });
+                                } else {
+                                    moodboardBox.innerHTML += '<p>No images found.</p>';
+                                }
+                            })
+                            .catch(err => {
+                                console.error(`Failed to load moodboard ${name}:`, err);
+                                moodboardBox.innerHTML += '<p>Error loading moodboard.</p>';
+                            });
+                    });
+                })
+                .catch(err => {
+                    console.error('Failed to fetch moodboards:', err);
+                    document.getElementById('saved-moodboards-container').innerHTML = '<p>Error fetching saved moodboards.</p>';
+                });
+        });
+    </script>
+</body>
+</html>
