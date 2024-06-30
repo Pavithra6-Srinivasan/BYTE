@@ -21,8 +21,7 @@ console.log(secretKey);
 const app = express();
 
 app.set('view engine', 'ejs');
-app.set('public', path.join(__dirname
-  , 'public'));
+app.set('public', path.join(__dirname , 'public'));
 
 const db = mysql.createConnection({
     host: 'localhost',
