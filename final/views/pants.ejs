@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link rel="stylesheet" type="text/css" href="/stylebackup.css">
+</head>
+<body>
+    
+    <h1>PANTS</h1>       
+    <div class="filter-sidebar-container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="graphic-tees">SEARCH</a></li>
+                <li><a href="upload.html">NEW MOODBOARD</a></li>
+                <li><a href="saved.html">SAVED MOODBOARD</a></li>
+            </ul>
+        </nav>
+        <div id="filter-container">
+            <form id="filter-form">
+
+                <div class="search-container">
+                <input class="search-bar" type="text" name="search" placeholder="Search...">
+                </div>
+                
+                <div id="gender-buttons">
+                    <button onclick="filterGender('female')">Women</button>
+                    <button onclick="filterGender('male')">Men</button>
+                </div>
+
+                <div>
+                <button onclick="location.href='/graphic-tees'" class="navigation-button">Graphic Tees</button>
+                <button onclick="location.href='/tops'" class="navigation-button">Tops</button>
+                <button onclick="location.href='/pants'" class="navigation-button">Pants</button>
+                <button onclick="location.href='/dresses'" class="navigation-button">Dresses</button>
+                <button onclick="location.href='/jeans'" class="navigation-button">Jeans</button>
+                </div>
+                <div>
+                <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
+                <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
+                <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
+                <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
+                <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
+                </div>
+                
+                <div>
+                <select name="colour">
+                    <option value="">All Colours</option>
+                    <option value="red">red</option>
+                    <option value="blue">blue</option>
+                    <option value="white">white</option>
+                    <option value="pink">pink</option>
+                    <option value="black">black</option>
+                    <option value="beige">beige</option>
+                    <option value="green">green</option>
+                    <option value="grey">grey</option>
+                    <option value="off-white">off-white</option>
+                    <option value="navy">navy</option>
+                    <option value="brown">brown</option>
+                    <option value="multi">multi</option>
+                </select>
+                </div>
+
+                <div><input type="number" name="minPrice" placeholder="Min Price"></div>
+                <div><input type="number" name="maxPrice" placeholder="Max Price"></div>
+                
+                <div><button type="submit">Filter</button></div>
+            </form>           
+        </div>
+    </div>
+
+    <div id="pants-list">
+        <% products.forEach(product => { %>
+            <div class="product-item" data-image-url="<%= product.img %>">
+                <h3><%= product.title.replace('Go to product: ', '') %></h3>
+                <a href="<%= product.urlpg %>" target="_blank">
+                    <img src="<%= product.img %>" alt="<%= product.title %>">
+                </a>
+                <p>Pricing: <%= product.pricing %></p>
+                <div class="color-list">
+                    <% JSON.parse(product.colour).forEach(colour => { %>
+                        <span class="color-item"><%= colour %></span>
+                    <% }); %>
+                </div>
+                <div class="dropdown">
+                    <button class="dropbtn">Add to New Moodboard</button>
+                    <div class="dropdown-content">
+                      <a href="#" class="add-to-new-moodboard" data-image-url="<%= product.img %>">Add</a>
+                    </div>
+                </div>      
+            </div>
+        <% }); %>
+    </div>  
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.dropbtn').click(function() {
+                $(this).siblings('.dropdown-content').toggle();
+            });
+
+            $(document).click(function(event) {
+                if (!$(event.target).closest('.dropdown').length) {
+                    $('.dropdown-content').hide();
+                }
+            });
+
+            $('.add-to-new-moodboard').click(function(event) {
+                event.preventDefault();
+                const imageUrl = $(this).data('image-url');
+                let newMoodboardImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
+                newMoodboardImages.push(imageUrl);
+                localStorage.setItem('newMoodboardImages', JSON.stringify(newMoodboardImages));
+                alert('Image added to new moodboard');
+            });
+
+            $('#filter-form').submit(function(event) {
+                event.preventDefault();
+                const formData = $(this).serialize();
+                $.ajax({
+                    url: '/pants?' + formData,
+                    method: 'GET',
+                    success: function(data) {
+                        $('#pants-list').html(data);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching filtered products:', error);
+                    }
+                });
+            });
+        });
+        function filterGender(gender) {
+            window.location.href = `/pants?gender=${gender}`;
+        }
+    </script>
+</body>
+</html>
