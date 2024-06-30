@@ -6,8 +6,6 @@ const mysql = require('mysql2');
 const fs = require('fs');
 const sharp = require('sharp');
 
-
-
 const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
@@ -24,16 +22,9 @@ app.set('view engine', 'ejs');
 app.set('public', path.join(__dirname , 'public'));
 require('dotenv').config();
 
-
-
 const pool = mysql.createConnection({
-    // host: process.env.DB_HOST,
-    // user: process.env.DB_USER,
-    // password: process.env.DB_PASSWORD,
-    // database: process.env.DB_DATABASE
-    uri: process.env.JDBC_DATABASE_URL
+  uri: process.env.JDBC_DATABASE_URL
 });
-
 
 pool.connect((err) => {
     if (err) {
@@ -43,58 +34,32 @@ pool.connect((err) => {
     console.log('Connected to jawsdb');
 });
 
-
-
-// const pool = mysql.createConnection({
-//     host: 'localhost',
-//     user: 'sqluser',
-//     password: 'password', 
-//     database: 'byteusers'
-// });
-
-// .connect((err) => {
-//     if (err) {
-//         console.error('Error connecting to MySQL:', err);
-//         return;
-//     }
-//     console.log('Connected to MySQL');
-// });
-
-
-
-  const storage = multer.diskStorage({
-    destination: './uploads/',
-    filename: (req, file, cb) => {
-        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-    }
+const storage = multer.diskStorage({
+  destination: './uploads/',
+  filename: (req, file, cb) => {
+  cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+}
 });
 
+const upload = multer({ storage });
 
-  const upload = multer({ storage });
-
-
-// Middleware to parse JSON
 app.use(bodyParser.json());
 
-// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-// Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
 });
 
-// account creation
+// ACCOUNT CREATION
 app.post('/sign-up', (req, res) => {
     const { username, email, password } = req.body;
 
     console.log('Create Account Request:', req.body);
 
-    // Account creation
     if (username && email && password) {
         console.log('checking username email and password');
-        // Check if the username already exists
+        // CHECK IF USERNAME ALREADY EXISTS
         const userExists = 'SELECT * FROM users WHERE username = ?';
         console.log('selecting from database');
         pool.query(userExists, [username], (err, results) => {
@@ -141,13 +106,10 @@ app.get('/upload2', (req, res) => {
 });
 
 function generateToken(userId) {
-  // Implement your token generation logic here
-  // Example: using a crypto library to generate a random string
   const crypto = require('crypto');
   const token = crypto.randomBytes(32).toString('hex');
   return token;
 }
-
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
@@ -162,12 +124,10 @@ app.post('/login', (req, res) => {
       return;
     }
     if (results.length > 0) {
-      const user = results[0]; // Assuming the first result is the user
+      const user = results[0];
 
-      // Generate a token for the user
       const token = generateToken(user.id);
 
-      // Store the token in the database (replace with your logic)
       const updateTokenQuery = 'UPDATE users SET token = ? WHERE id = ?';
       ensureUserDirectory(username);
     pool.query(updateTokenQuery, [token, user.id], (updateErr) => {
@@ -177,9 +137,8 @@ app.post('/login', (req, res) => {
     return;
   }
 
-        // Respond with success and the generated token
-        res.json({ success: true, message: 'Login successful!', token });
-      });
+    res.json({ success: true, message: 'Login successful!', token });
+    });
     } else {
       res.json({ success: false, message: 'Invalid credentials' });
     }
@@ -221,7 +180,7 @@ app.get('/graphic-tees', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
       res.render('graphic-tees-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -231,7 +190,7 @@ app.get('/graphic-tees', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
+      // IF NOT, FULL PAGE
       res.render('graphic-tees', { products: results });
     }
   });
@@ -273,7 +232,6 @@ app.get('/tops', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('tops-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -283,7 +241,6 @@ app.get('/tops', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('tops', { products: results });
     }
   });
@@ -316,7 +273,6 @@ app.get('/pants', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -325,7 +281,6 @@ app.get('/pants', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('pants-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -335,12 +290,10 @@ app.get('/pants', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('pants', { products: results });
     }
   });
 });
-
 
 app.get('/dresses', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -369,7 +322,6 @@ app.get('/dresses', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -378,7 +330,6 @@ app.get('/dresses', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('dresses-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -388,12 +339,10 @@ app.get('/dresses', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('dresses', { products: results });
     }
   });
 });
-
 
 app.get('/jeans', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -422,7 +371,6 @@ app.get('/jeans', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -431,7 +379,6 @@ app.get('/jeans', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('jeans-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -441,12 +388,10 @@ app.get('/jeans', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('jeans', { products: results });
     }
   });
 });
-
 
 app.get('/shorts', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -475,7 +420,6 @@ app.get('/shorts', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -484,7 +428,6 @@ app.get('/shorts', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('shorts-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -494,12 +437,10 @@ app.get('/shorts', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('shorts', { products: results });
     }
   });
 });
-
 
 app.get('/skirts', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -528,7 +469,6 @@ app.get('/skirts', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -537,7 +477,6 @@ app.get('/skirts', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('skirts-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -547,12 +486,10 @@ app.get('/skirts', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('skirts', { products: results });
     }
   });
 });
-
 
 app.get('/sweaters', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -581,7 +518,6 @@ app.get('/sweaters', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -590,7 +526,6 @@ app.get('/sweaters', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('sweaters-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -600,12 +535,10 @@ app.get('/sweaters', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('sweaters', { products: results });
     }
   });
 });
-
 
 app.get('/cardigans', (req, res) => {
   const { search, colour, minPrice, maxPrice, gender } = req.query;
@@ -634,7 +567,6 @@ app.get('/cardigans', (req, res) => {
     params.push(gender);
   }
 
-
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
@@ -643,7 +575,6 @@ app.get('/cardigans', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('cardigans-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -653,14 +584,10 @@ app.get('/cardigans', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('cardigans', { products: results });
     }
   });
 });
-
-
-
 
 app.get('/jackets', (req, res) => {
   const { search, colour, minPrice, maxPrice,gender } = req.query;
@@ -697,7 +624,6 @@ app.get('/jackets', (req, res) => {
     }
 
     if (req.xhr) {
-      // If the request is AJAX, send only the product list HTML
       res.render('jackets-list', { products: results }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
@@ -707,27 +633,17 @@ app.get('/jackets', (req, res) => {
         res.send(html);
       });
     } else {
-      // If not an AJAX request, render the full page
      res.render('jackets', { products: results });
     }
   });
 });
 
-
-
-
-
-
-
-
-// Serve the HTML file
 app.get('/upload', (req, res) => {
 res.sendFile(path.join(__dirname, 'public', 'upload.html'));
 });
 
 const moodboardsDir = path.join(__dirname, 'moodboards');
 
-// Ensure that the 'moodboards' directory exists
 if (!fs.existsSync(moodboardsDir)) {
     fs.mkdirSync(moodboardsDir);
 }
@@ -741,27 +657,6 @@ function ensureUserDirectory(username) {
       fs.mkdirSync(userDir);
   }
 }
-
-// Save a moodboard for a user
-// app.post('/save-moodboard', (req, res) => {
-//   const { username, name, images } = req.body;
-//   try {
-//       ensureUserDirectory(username);
-
-//       const fileName = `${name}.json`;
-//       const filePath = path.join(moodboardsDir, username, fileName);
-//       const moodboardData = { images };
-
-//       fs.writeFile(filePath, JSON.stringify(moodboardData, null, 2), (err) => {
-//           if (err) {
-//               return res.status(500).send('Error saving moodboard');
-//           }
-//           res.send('Moodboard saved successfully');
-//       });
-//   } catch (error) {
-//       res.status(400).send(error.message);
-//   }
-// });
 
 app.post('/save-moodboard', (req, res) => {
   const { username, name, images } = req.body;
@@ -790,7 +685,6 @@ function ensureUserDirectory(username) {
   }
 }
 
-// List moodboards for a user
 app.get('/list-moodboards/:username', (req, res) => {
   const username = req.params.username;
   try {
@@ -809,7 +703,6 @@ app.get('/list-moodboards/:username', (req, res) => {
   }
 });
 
-// Fetch a specific moodboard for a user
 app.get('/moodboard/:username/:name', (req, res) => {
   const { username, name } = req.params;
   try {
@@ -829,21 +722,18 @@ app.get('/moodboard/:username/:name', (req, res) => {
   }
 });
 
-
-
 const User = require('./server/models/user');
-
+  
+  //SESSION
 app.use(session({
     secret: process.env.SESSION_SECRET || 'secretKey',
     resave: false,
     saveUninitialized: true
   }));
   
-  // Passport middleware
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Serialize user to session
   passport.serializeUser((user, done) => {
     done(null, user);
   });
@@ -862,34 +752,22 @@ app.use(session({
     return done(null, profile);
   }));
 
-// Route to start OAuth process
+// ROUTE TO START AUTH PROCESS
 app.get('/auth/google',
 passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login', 'email'] })
 );
 
-
-// app.get('/auth/google/callback',
-//   passport.authenticate('google', { failureRedirect: '/login.html' }),
-//   (req, res) => {
-//     // Successful authentication, redirect to main website page
-//     res.redirect('/upload.html');
-//   }
-//   );
-
-
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login.html' }),
   (req, res) => {
-    // Successful authentication
-    const googleProfile = req.user; // Access user information from Google
+    // SUCESSFUL AUTHENTICATION
+    const googleProfile = req.user;
 
-    // Check if user with the email already exists
+    // CHECK IF USER WITH EMAIL ALREADY EXISTS
     const checkUserExists = async (email) => {
-      // Implement your logic to check for existing user based on email
       const existingUser = await User.findOne({
-        where: { email: email } // Filter by email
+        where: { email: email } 
       });
-
       return existingUser ? true : false;
     };
 
@@ -897,48 +775,40 @@ app.get('/auth/google/callback',
       .then(userExists => {
         if (userExists) {
           console.log('User already exists:', googleProfile.emails[0].value);
-          // User already exists, you can update the user information if needed
-          // ... (logic to update user record if needed)
-          // You can potentially redirect to the user's profile page here
-          res.redirect('/upload.html'); // Or redirect to a relevant page
+          res.redirect('/upload.html');
         } else {
           console.log('New user:', googleProfile.emails[0].value);
-          // Create a new user record
+          // CREATE NEW USER
           const newUser = new User({
-            username: googleProfile.displayName || null, // Set username from Google profile (optional)
-            email: googleProfile.emails[0].value || null, // Set email from Google profile (optional)
+            username: googleProfile.displayName || null, 
+            email: googleProfile.emails[0].value || null, 
           });
 
-          newUser.save() // Assuming 'save' is a method on your User model to persist data
+          newUser.save() 
             .then(createdUser => {
               console.log('User created successfully:', createdUser.dataValues);
-              // (Optional) Generate your own internal token for the user
-              // ... (logic for token generation)
-              // Redirect to a relevant page (e.g., profile, deposit)
               res.redirect('/upload.html');
             })
             .catch(err => {
               console.error('Error creating user:', err);
-              // Handle errors during user creation (e.g., display error message)
               res.status(500).send('Error creating user');
             });
         }
       })
       .catch(err => {
         console.error('Error checking for existing user:', err);
-        // Handle errors during user existence check
         res.status(500).send('Error logging in');
       });
   }
 );
 
-// Route to handle logout
+  // LOGOUT
 app.get('/logout', (req, res) => {
 req.logout();
 res.redirect('/login.html');
 });
 
-// Route to check if the user is logged in
+  // CHECK IF USER IS ALREADY LOGGED IN
 app.get('/profile', (req, res) => {
 if (!req.isAuthenticated()) {
   return res.status(401).send('You are not authenticated');
