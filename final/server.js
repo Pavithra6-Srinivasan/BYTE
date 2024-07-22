@@ -816,6 +816,60 @@ if (!req.isAuthenticated()) {
 res.send(req.user);
 });
 
+
+//inspiration page
+app.get('/images', (req, res) => {
+  pool.query('SELECT id, image_url FROM finspo', (error, results) => {
+      if (error) {
+          console.error('Error fetching images:', error);
+          res.status(500).send('Error fetching images');
+          return;
+      }
+
+      let html = `
+          <html>
+              <head>
+                  <title>Image Gallery</title>
+                  <style>
+                      .gallery {
+                          display: flex;
+                          flex-wrap: wrap;
+                      }
+                      .gallery div {
+                          margin: 10px;
+                          text-align: center;
+                      }
+                      .gallery img {
+                          max-width: 200px;
+                          height: auto;
+                      }
+                  </style>
+              </head>
+              <body>
+                  <h1>Image Gallery</h1>
+                  <div class="gallery">
+      `;
+
+      results.forEach(row => {
+          html += `
+              <div>
+                  <img src="${row.image_url}" alt="Image ${row.id}">
+                  <p>ID: ${row.id}</p>
+              </div>
+          `;
+      });
+
+      html += `
+                  </div>
+              </body>
+          </html>
+      `;
+
+      res.send(html);
+  });
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
