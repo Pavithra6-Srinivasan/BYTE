@@ -1,11 +1,12 @@
 const express = require('express');
 const path = require('path');
-const multer = require('multer')
+const multer = require('multer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
 const sharp = require('sharp');
-
+const cors = require('cors'); 
+const axios = require('axios');
 const folderId = `folder-${Date.now()}`;
 
 const session = require('express-session');
@@ -23,7 +24,12 @@ app.set('public', path.join(__dirname , 'public'));
 require('dotenv').config();
 
 const pool = mysql.createConnection({
-  uri: process.env.JDBC_DATABASE_URL
+  uri: process.env.JDBC_DATABASE_URL,
+   waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    connectTimeout: 10000,
+    
 });
 
 pool.connect((err) => {
@@ -43,9 +49,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+
 app.use(bodyParser.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+
+ 
+
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
@@ -658,25 +673,59 @@ function ensureUserDirectory(username) {
   }
 }
 
+
 app.post('/save-moodboard', (req, res) => {
-  const { username, name, images } = req.body;
-  try {
-      ensureUserDirectory(username);
+    const { username, name, images } = req.body;
 
-      const fileName = `${name}.json`;
-      const filePath = path.join(moodboardsDir, username, fileName);
-      const moodboardData = { images };
+    const userQuery = 'SELECT id FROM users WHERE username = ?';
+    pool.query(userQuery, [username], (err, userResult) => {
+        if (err) {
+            console.error('Error fetching user:', err);
+            res.status(500).send('Error fetching user');
+            return;
+        }
 
-      fs.writeFile(filePath, JSON.stringify(moodboardData, null, 2), (err) => {
-          if (err) {
-              return res.status(500).send('Error saving moodboard');
-          }
-          res.send('Moodboard saved successfully');
-      });
-  } catch (error) {
-      res.status(400).send(error.message);
-  }
+        if (userResult.length === 0) {
+            res.status(404).send('User not found');
+            return;
+        }
+
+        const userId = userResult[0].id;
+
+        const imagePaths = images.map((image, index) => ({
+          src: image.src,
+          position: image.position
+      }));
+
+        // const imagePaths = images.map((image, index) => {
+        //   const base64Data = image.src.replace(/^data:image\/\w+;base64,/, "");
+        //   const extension = image.src.split(';')[0].split('/')[1];
+        //   const filePath = path.join(uploadDir, `moodboard_${username}_${Date.now()}_${index}.${extension}`);
+
+        //   fs.writeFileSync(filePath, base64Data, 'base64');
+        //   return { path: filePath, position: image.position };
+        // });
+
+        const imagesJson = JSON.stringify(imagePaths);
+
+
+
+
+      //  const imagesJson = JSON.stringify(images);
+
+        const insertMoodboardQuery = 'INSERT INTO moodboards (user_id, title, images) VALUES (?, ?, ?)';
+        pool.query(insertMoodboardQuery, [userId, name, imagesJson], (err, result) => {
+            if (err) {
+                console.error('Error saving moodboard:', err);
+                res.status(500).send('Error saving moodboard');
+                return;
+            }
+
+            res.send('Moodboard saved successfully');
+        });
+    });
 });
+
 
 function ensureUserDirectory(username) {
   const userDir = path.join(moodboardsDir, username);
@@ -685,42 +734,108 @@ function ensureUserDirectory(username) {
   }
 }
 
+
 app.get('/list-moodboards/:username', (req, res) => {
   const username = req.params.username;
-  try {
-      ensureUserDirectory(username);
+  
+  const userQuery = 'SELECT id FROM users WHERE username = ?';
+  pool.query(userQuery, [username], (err, userResult) => {
+    if (err) {
+      console.error('Error fetching user:', err);
+      res.status(500).send('Error fetching user');
+      return;
+    }
 
-      const userDir = path.join(moodboardsDir, username);
-      fs.readdir(userDir, (err, files) => {
-          if (err) {
-              return res.status(500).send('Unable to scan directory');
-          }
-          const moodboards = files.map(file => path.parse(file).name);
-          res.json(moodboards);
-      });
-  } catch (error) {
-      res.status(400).send(error.message);
-  }
+    if (userResult.length === 0) {
+      res.status(404).send('User not found');
+      return;
+    }
+
+    const userId = userResult[0].id;
+    const moodboardsQuery = 'SELECT id, title FROM moodboards WHERE user_id = ?';
+    pool.query(moodboardsQuery, [userId], (err, moodboardsResult) => {
+      if (err) {
+        console.error('Error fetching moodboards:', err);
+        res.status(500).send('Error fetching moodboards');
+        return;
+      }
+
+      res.json(moodboardsResult);
+    });
+  });
 });
 
-app.get('/moodboard/:username/:name', (req, res) => {
-  const { username, name } = req.params;
-  try {
-      ensureUserDirectory(username);
 
-      const fileName = `${name}.json`;
-      const filePath = path.join(moodboardsDir, username, fileName);
 
-      fs.readFile(filePath, 'utf8', (err, data) => {
-          if (err) {
-              return res.status(404).send('Moodboard not found');
-          }
-          res.json(JSON.parse(data));
-      });
-  } catch (error) {
-      res.status(400).send(error.message);
-  }
+app.get('/moodboard/:username/:moodboardId', (req, res) => {
+  const { username, moodboardId } = req.params;
+
+  const moodboardQuery = `
+    SELECT m.title, m.images
+    FROM moodboards m
+    JOIN users u ON m.user_id = u.id
+    WHERE u.username = ? AND m.id = ?`;
+
+  pool.query(moodboardQuery, [username, moodboardId], (err, moodboardResult) => {
+    if (err) {
+      console.error('Error fetching moodboard:', err);
+      res.status(500).send('Error fetching moodboard');
+      return;
+    }
+
+    if (moodboardResult.length === 0) {
+      res.status(404).send('Moodboard not found');
+      return;
+    }
+
+    res.json(moodboardResult[0]);
+  });
 });
+
+app.use(cors()); // Enable CORS for all routes
+
+app.get('/proxy', async (req, res) => {
+    const imageUrl = req.query.url;
+
+    if (!imageUrl) {
+        return res.status(400).send('URL is required');
+    }
+
+    try {
+        const response = await axios({
+            url: imageUrl,
+            method: 'GET',
+            responseType: 'arraybuffer' // This allows us to handle binary data
+        });
+
+        // Set the appropriate headers for the response
+        res.set('Content-Type', response.headers['content-type']);
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error fetching the image:', error);
+        res.status(500).send('Error fetching the image');
+    }
+});
+
+// app.get('/recommendations', async (req, res) => {
+//   const color = req.query.color;
+
+//   try {
+//     // Query to fetch recommendations based on the color category
+//     const query = `
+//       SELECT title, img 
+//       FROM cottonon 
+//       WHERE color LIKE '%"${color}"%';
+//     `;
+//     const [rows] = await pool.query(query, [color]);
+
+//     res.json(rows);
+//   } catch (error) {
+//     console.error('Error fetching recommendations:', error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
 
 const User = require('./server/models/user');
   
@@ -745,6 +860,7 @@ app.use(session({
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    //callbackURL: 'https://localhost:3000/auth/google/callback',
     callbackURL: 'https://glacial-coast-30522-eb4abac1d785.herokuapp.com/auth/google/callback'
     
   },
@@ -757,50 +873,61 @@ app.get('/auth/google',
 passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login', 'email'] })
 );
 
+
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login.html' }),
   (req, res) => {
-    // SUCESSFUL AUTHENTICATION
-    const googleProfile = req.user;
-
-    // CHECK IF USER WITH EMAIL ALREADY EXISTS
-    const checkUserExists = async (email) => {
-      const existingUser = await User.findOne({
-        where: { email: email } 
-      });
-      return existingUser ? true : false;
-    };
-
-    checkUserExists(googleProfile.emails[0].value)
-      .then(userExists => {
-        if (userExists) {
-          console.log('User already exists:', googleProfile.emails[0].value);
-          res.redirect('/upload.html');
-        } else {
-          console.log('New user:', googleProfile.emails[0].value);
-          // CREATE NEW USER
-          const newUser = new User({
-            username: googleProfile.displayName || null, 
-            email: googleProfile.emails[0].value || null, 
-          });
-
-          newUser.save() 
-            .then(createdUser => {
-              console.log('User created successfully:', createdUser.dataValues);
-              res.redirect('/upload.html');
-            })
-            .catch(err => {
-              console.error('Error creating user:', err);
-              res.status(500).send('Error creating user');
-            });
-        }
-      })
-      .catch(err => {
-        console.error('Error checking for existing user:', err);
-        res.status(500).send('Error logging in');
-      });
+    // Successful authentication, redirect to main website page
+    res.redirect('/upload.html');
   }
-);
+  );
+
+
+
+// app.get('/auth/google/callback',
+//   passport.authenticate('google', { failureRedirect: '/login.html' }),
+//   (req, res) => {
+//     // SUCESSFUL AUTHENTICATION
+//     const googleProfile = req.user;
+
+//     // CHECK IF USER WITH EMAIL ALREADY EXISTS
+//     const checkUserExists = async (email) => {
+//       const existingUser = await User.findOne({
+//         where: { email: email } 
+//       });
+//       return existingUser ? true : false;
+//     };
+
+//     checkUserExists(googleProfile.emails[0].value)
+//       .then(userExists => {
+//         if (userExists) {
+//           console.log('User already exists:', googleProfile.emails[0].value);
+//           res.redirect('/upload.html');
+//         } else {
+//           console.log('New user:', googleProfile.emails[0].value);
+//           // CREATE NEW USER
+//           const newUser = new User({
+//             username: googleProfile.displayName || null, 
+//             email: googleProfile.emails[0].value || null, 
+//           });
+
+//           newUser.save() 
+//             .then(createdUser => {
+//               console.log('User created successfully:', createdUser.dataValues);
+//               res.redirect('/upload.html');
+//             })
+//             .catch(err => {
+//               console.error('Error creating user:', err);
+//               res.status(500).send('Error creating user');
+//             });
+//         }
+//       })
+//       .catch(err => {
+//         console.error('Error checking for existing user:', err);
+//         res.status(500).send('Error logging in');
+//       });
+//   }
+// );
 
   // LOGOUT
 app.get('/logout', (req, res) => {
@@ -817,7 +944,6 @@ res.send(req.user);
 });
 
 
-//inspiration page
 app.get('/images', (req, res) => {
   pool.query('SELECT id, image_url FROM finspo', (error, results) => {
       if (error) {
@@ -870,7 +996,10 @@ app.get('/images', (req, res) => {
 });
 
 
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
