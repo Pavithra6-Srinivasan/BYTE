@@ -1,4 +1,4 @@
-products.forEach(product => { %>
+<% products.forEach(product => { %>
     <% if (product.gender === 'female' || product.gender === 'male') { %>
         <div class="product-item" data-image-url="<%= product.img %>">
             <h3><%= product.title.replace('Go to product: ', '') %></h3>
