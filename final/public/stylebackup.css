@@ -417,7 +417,7 @@ h2 {
   }
 
   /* Delete button on image container */
-.delete-btn {
+.delete-btn{
   position: absolute;
   top: 0px;
   right: 0px;
@@ -433,14 +433,72 @@ h2 {
   transition: opacity 0.2s ease-in-out;
 }
 
+.crop-btn {
+  position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: green;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 1; 
+    width: 40px; 
+    height: 20px; 
+    font-size: 16px; 
+}
+
 /* Show delete button on hover */
 .image-container:hover .delete-btn {
   opacity: 1; /* Show delete button */
 }
 
-.delete-btn:hover {
+.crop-btn {
+  right: 5px;
+}
+
+.delete-btn:hover,
+.crop.btn.hover {
   background-color: #f55;
 }
 
 /* Show delete button on hover */
 
+/*crop button*/
+#new-moodboard {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#cropper-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#cropper-container img {
+  max-width: 90%;
+  max-height: 90%;
+}
+
+#crop-button {
+  position: absolute;
+  bottom: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+#crop-button:hover {
+  background-color: #0056b3;
+}
