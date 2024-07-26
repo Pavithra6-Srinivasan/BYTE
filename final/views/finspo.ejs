@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link rel="stylesheet" type="text/css" href="/stylebackup.css">
+    <style>
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            padding-left: 50px;
+        }
+        .gallery div {
+            margin: 20px;
+            text-align: center;
+        }
+        .gallery img {
+            width: 250px; /* Fixed width */
+            height: 300px; /* Fixed height */
+            object-fit: cover;
+        }
+    </style>
+</head>
+<div id="toast-container" class="toast-container"></div>
+<body>
+    <h1>STYLE GUIDE</h1>
+    <div class="filter-sidebar-container">
+        <nav class="sidebar">
+            <ul>
+                <li><a href="/graphic-tees">SEARCH</a></li>
+                <li><a href="/upload.html">NEW MOODBOARD</a></li>
+                <li><a href="/saved.html">SAVED MOODBOARD</a></li>
+                <li><a href="/finspo">STYLE GUIDE</a></li>
+            </ul>
+        </nav>
+        <div id="filter-container">
+            <div style="padding-left: 120px; padding-top: 50px;">
+                <a href="/finspo" class="girl">FEMALE</a>
+                <a href="/minspo" class="boy">MALE</a>
+            </div>
+        </div>
+    </div>
+    <div class="gallery">
+        <% if (images && images.length > 0) { %>
+            <% images.forEach(image => { %>
+                <div>
+                    <img src="<%= image.image_url %>" alt="Image <%= image.id %>">
+                </div>
+            <% }); %>
+        <% } else { %>
+            <p>No images found.</p>
+        <% } %>
+    </div>
+</body>
+</html>
