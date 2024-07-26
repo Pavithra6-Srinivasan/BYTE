@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saved Moodboards</title>
-    
     <link rel="stylesheet" href="stylebackup.css">
+    <script>src="https://code.jquery.com/jquery-3.6.0.min.js"</script>
     <style>
         .moodboard-box {
             border: 1px solid #ccc;
@@ -19,26 +19,28 @@
             text-align: center;
         }
         .moodboard-box .images-container {
-            position: relative;
-            width: 100%;
-            height: 400px; /* Set a fixed height for the moodboard container */
-            border: 1px solid #ddd;
-            overflow: hidden;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         .moodboard-box img {
-            position: absolute;
+            width: 150px;
+            height: 150px;
+            margin: 5px;
             object-fit: contain; /* Ensures the image covers the specified dimensions without distortion */
         }
     </style>
 </head>
+
 <body>
     <h1>BYTE</h1>
     <div class="container">
         <nav class="sidebar">
             <ul>
-                <li><a href="/graphic-tees">SEARCH</a></li>
-                <li><a href="upload.html">NEW MOODBOARD</a></li>
-                <li><a href="saved.html">SAVED MOODBOARDS</a></li>
+               <li><a href="graphic-tees">SEARCH</a></li>
+               <li><a href="upload.html">NEW MOODBOARD</a></li>
+               <li><a href="saved.html">SAVED MOODBOARDS</a></li>
+               <li><a href="finspo">STYLE GUIDE</a></li>
             </ul>
         </nav>
         <main class="content">
@@ -109,5 +111,6 @@
                 });
         });
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
