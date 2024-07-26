@@ -7,7 +7,6 @@
     <link rel="stylesheet" type="text/css" href="/stylebackup.css">
 </head>
 <body>
-    
     <h1>TOPS</h1>
     <div class="filter-sidebar-container">
         <nav class="sidebar">
@@ -15,6 +14,7 @@
                 <li><a href="graphic-tees">SEARCH</a></li>
                 <li><a href="upload.html">NEW MOODBOARD</a></li>
                 <li><a href="saved.html">SAVED MOODBOARD</a></li>
+                <li><a href="finspo">STYLE GUIDE</a></li>
             </ul>
         </nav>
         <div id="filter-container">
@@ -25,23 +25,23 @@
                 </div>
                 
                 <div id="gender-buttons">
-                    <button onclick="filterGender('female')">Women</button>
-                    <button onclick="filterGender('male')">Men</button>
+                  <button class="girl" onclick="filterGender('female')">FEMALE</button>
+                  <button class="boy" onclick="filterGender('male')">MALE</button>
                 </div>
 
                 <div>
                 <button onclick="location.href='/graphic-tees'" class="navigation-button">Graphic Tees</button>
+                <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
+                <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
+                <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
+                <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
+                </div>
+                <div>
+                <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
                 <button onclick="location.href='/tops'" class="navigation-button">Tops</button>
                 <button onclick="location.href='/pants'" class="navigation-button">Pants</button>
                 <button onclick="location.href='/dresses'" class="navigation-button">Dresses</button>
                 <button onclick="location.href='/jeans'" class="navigation-button">Jeans</button>
-                </div>
-                <div>
-                <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
-                <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
-                <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
-                <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
-                <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
                 </div>
                 
                 <div>
@@ -60,35 +60,30 @@
                     <option value="brown">brown</option>
                     <option value="multi">multi</option>
                 </select>
-                </div>
 
-                <div><input type="number" name="minPrice" placeholder="Min Price"></div>
-                <div><input type="number" name="maxPrice" placeholder="Max Price"></div>
+                <input type="number" name="minPrice" placeholder="Min Price">
+                <input type="number" name="maxPrice" placeholder="Max Price">
                 
-                <div><button type="submit">Filter</button></div>
+                <button type="submit">Filter</button>
+                </div>
             </form>           
         </div>
     </div>
 
-    <div id="tops-list">
+    <div style="padding-left: 80px;" id="tops-list">
         <% products.forEach(product => { %>
             <div class="product-item" data-image-url="<%= product.img %>">
                 <h3><%= product.title.replace('Go to product: ', '') %></h3>
                 <a href="<%= product.urlpg %>" target="_blank">
                     <img src="<%= product.img %>" alt="<%= product.title %>">
                 </a>
-                <p>Pricing: <%= product.pricing %></p>
+                <p>S$<%= product.pricing %></p>
                 <div class="color-list">
                     <% JSON.parse(product.colour).forEach(colour => { %>
                         <span class="color-item"><%= colour %></span>
                     <% }); %>
                 </div>
-                <div class="dropdown">
-                    <button class="dropbtn">Add to New Moodboard</button>
-                    <div class="dropdown-content">
-                      <a href="#" class="add-to-new-moodboard" data-image-url="<%= product.img %>">Add</a>
-                    </div>
-                </div>              
+                <button class="add-to-new-moodboard; navigation-button" data-image-url="<%= product.img %>">ADD</button>            
             </div>        
         <% }); %>     
     </div>  
@@ -96,23 +91,13 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('.dropbtn').click(function() {
-                $(this).siblings('.dropdown-content').toggle();
-            });
-
-            $(document).click(function(event) {
-                if (!$(event.target).closest('.dropdown').length) {
-                    $('.dropdown-content').hide();
-                }
-            });
-
             $('.add-to-new-moodboard').click(function(event) {
                 event.preventDefault();
                 const imageUrl = $(this).data('image-url');
                 let newMoodboardImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
                 newMoodboardImages.push(imageUrl);
+                alert('Image added to new moodboard', 'success');
                 localStorage.setItem('newMoodboardImages', JSON.stringify(newMoodboardImages));
-                alert('Image added to new moodboard');
             });
 
             $('#filter-form').submit(function(event) {
