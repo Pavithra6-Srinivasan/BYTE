@@ -1,10 +1,8 @@
 const express = require('express');
 const path = require('path');
-const multer = require('multer');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
-const sharp = require('sharp');
 const cors = require('cors'); 
 const axios = require('axios');
 const folderId = `folder-${Date.now()}`;
@@ -40,14 +38,7 @@ pool.connect((err) => {
     console.log('Connected to jawsdb');
 });
 
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-  cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
-}
-});
 
-const upload = multer({ storage });
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -65,6 +56,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
 });
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req, res, next) {
+  if (req.session && req.session.username) {
+      // User is authenticated
+      return next();
+  } else {
+      // User is not authenticated
+      res.redirect('/login.html'); // Redirect to login page
+  }
+}
+
+// Apply the middleware to routes that require authentication
+app.get('/saved', isAuthenticated, (req, res) => {
+  // Serve the saved moodboards page
+  res.sendFile(path.join(__dirname, 'saved.html'));
+});
+
 
 // ACCOUNT CREATION
 app.post('/sign-up', (req, res) => {
@@ -116,9 +125,6 @@ app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/upload2', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload2.html'));
-});
 
 function generateToken(userId) {
   const crypto = require('crypto');
@@ -653,9 +659,6 @@ app.get('/jackets', (req, res) => {
   });
 });
 
-app.get('/upload', (req, res) => {
-res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-});
 
 const moodboardsDir = path.join(__dirname, 'moodboards');
 
@@ -792,30 +795,93 @@ app.get('/moodboard/:username/:moodboardId', (req, res) => {
   });
 });
 
-app.use(cors()); // Enable CORS for all routes
+app.get('/get-moodboard/:moodboardId', (req, res) => {
+  const { moodboardId } = req.params;
+  console.log('Received moodboardId:', moodboardId); // Debugging log
 
-app.get('/proxy', async (req, res) => {
-    const imageUrl = req.query.url;
+  const query = 'SELECT images FROM moodboards WHERE id = ?';
 
-    if (!imageUrl) {
-        return res.status(400).send('URL is required');
+  pool.query(query, [moodboardId], (err, results) => {
+      if (err) {
+          console.error('Error fetching moodboard:', err);
+          return res.status(500).json({ success: false, message: 'Server error.' });
+      }
+
+      console.log('Query result:', results); // Debugging log
+
+      if (results.length > 0) {
+          let images = results[0].images;
+          console.log('Raw images data:', images); // Log raw data
+
+          // No need to parse if images is already an array or object
+          // images = JSON.parse(images); // Comment out or remove this line
+
+          res.json({ success: true, moodboard: images });
+      } else {
+          res.json({ success: false, message: 'Moodboard not found.' });
+      }
+  });
+});
+
+
+
+
+app.get('/upload', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
+  });
+
+  app.get('/upload.html', async (req, res) => {
+    const moodboardId = req.query.moodboardId;
+
+    if (!moodboardId) {
+        return res.status(400).send('Moodboard ID is required');
     }
 
     try {
-        const response = await axios({
-            url: imageUrl,
-            method: 'GET',
-            responseType: 'arraybuffer' // This allows us to handle binary data
-        });
+        // Fetch the moodboard data from the database
+        const [rows] = await pool.query('SELECT * FROM moodboards WHERE id = ?', [moodboardId]);
 
-        // Set the appropriate headers for the response
-        res.set('Content-Type', response.headers['content-type']);
-        res.send(response.data);
+        if (rows.length === 0) {
+            return res.status(404).send('Moodboard not found');
+        }
+
+        const moodboard = rows[0];
+
+        // Render the upload page with the moodboard data
+        res.render('upload', { moodboard }); // Assuming you are using a templating engine like EJS or Pug
     } catch (error) {
-        console.error('Error fetching the image:', error);
-        res.status(500).send('Error fetching the image');
+        console.error('Error fetching moodboard:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
+
+app.use(cors()); // Enable CORS for all routes
+
+app.get('/proxy', async (req, res) => {
+  const imageUrl = req.query.url;
+
+  if (!imageUrl) {
+      return res.status(400).send('URL is required');
+  }
+
+  console.log('Proxy URL:', decodeURIComponent(imageUrl)); // Log URL for debugging
+
+  try {
+      const response = await axios({
+          url: decodeURIComponent(imageUrl), // Decode URL before using
+          method: 'GET',
+          responseType: 'arraybuffer' // Handle binary data
+      });
+
+      // Set the appropriate headers for the response
+      res.set('Content-Type', response.headers['content-type']);
+      res.send(response.data);
+  } catch (error) {
+      console.error('Error fetching the image:', error);
+      res.status(500).send('Error fetching the image');
+  }
+});
+
 
 // app.get('/recommendations', async (req, res) => {
 //   const color = req.query.color;
@@ -943,6 +1009,23 @@ if (!req.isAuthenticated()) {
 res.send(req.user);
 });
 
+app.get('/check-moodboard-name/:username/:name', (req, res) => {
+  const { username, name } = req.params;
+
+  // Use pool.query to execute the query
+  pool.query(
+      'SELECT * FROM moodboards WHERE user_id = (SELECT id FROM users WHERE username = ?) AND title = ?',
+      [username, name],
+      (err, results) => {
+          if (err) {
+              console.error('Error executing query:', err);
+              return res.status(500).json({ error: 'Error checking moodboard name' });
+          }
+
+          res.json({ exists: results.length > 0 });
+      }
+  );
+});
 
 app.get('/images', (req, res) => {
   pool.query('SELECT id, image_url FROM finspo', (error, results) => {
@@ -1002,4 +1085,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
