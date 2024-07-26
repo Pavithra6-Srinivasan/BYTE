@@ -3,6 +3,7 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
+
 const cors = require('cors'); 
 const axios = require('axios');
 const folderId = `folder-${Date.now()}`;
@@ -38,20 +39,11 @@ pool.connect((err) => {
     console.log('Connected to jawsdb');
 });
 
-
-
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
-
 app.use(bodyParser.json());
-
+app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-
-
- 
-
-
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'sign-up.html'));
@@ -67,13 +59,11 @@ function isAuthenticated(req, res, next) {
       res.redirect('/login.html'); // Redirect to login page
   }
 }
-
 // Apply the middleware to routes that require authentication
 app.get('/saved', isAuthenticated, (req, res) => {
   // Serve the saved moodboards page
   res.sendFile(path.join(__dirname, 'saved.html'));
 });
-
 
 // ACCOUNT CREATION
 app.post('/sign-up', (req, res) => {
@@ -124,7 +114,6 @@ app.post('/sign-up', (req, res) => {
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-
 
 function generateToken(userId) {
   const crypto = require('crypto');
@@ -659,7 +648,6 @@ app.get('/jackets', (req, res) => {
   });
 });
 
-
 const moodboardsDir = path.join(__dirname, 'moodboards');
 
 if (!fs.existsSync(moodboardsDir)) {
@@ -710,10 +698,6 @@ app.post('/save-moodboard', (req, res) => {
         // });
 
         const imagesJson = JSON.stringify(imagePaths);
-
-
-
-
       //  const imagesJson = JSON.stringify(images);
 
         const insertMoodboardQuery = 'INSERT INTO moodboards (user_id, title, images) VALUES (?, ?, ?)';
@@ -729,14 +713,12 @@ app.post('/save-moodboard', (req, res) => {
     });
 });
 
-
 function ensureUserDirectory(username) {
   const userDir = path.join(moodboardsDir, username);
   if (!fs.existsSync(userDir)) {
       fs.mkdirSync(userDir, { recursive: true });
   }
 }
-
 
 app.get('/list-moodboards/:username', (req, res) => {
   const username = req.params.username;
@@ -768,8 +750,6 @@ app.get('/list-moodboards/:username', (req, res) => {
   });
 });
 
-
-
 app.get('/moodboard/:username/:moodboardId', (req, res) => {
   const { username, moodboardId } = req.params;
 
@@ -796,159 +776,114 @@ app.get('/moodboard/:username/:moodboardId', (req, res) => {
 });
 
 app.get('/get-moodboard/:moodboardId', (req, res) => {
-  const { moodboardId } = req.params;
-  console.log('Received moodboardId:', moodboardId); // Debugging log
-
-  const query = 'SELECT images FROM moodboards WHERE id = ?';
-
-  pool.query(query, [moodboardId], (err, results) => {
-      if (err) {
-          console.error('Error fetching moodboard:', err);
-          return res.status(500).json({ success: false, message: 'Server error.' });
-      }
-
-      console.log('Query result:', results); // Debugging log
-
-      if (results.length > 0) {
-          let images = results[0].images;
-          console.log('Raw images data:', images); // Log raw data
-
-          // No need to parse if images is already an array or object
-          // images = JSON.parse(images); // Comment out or remove this line
-
-          res.json({ success: true, moodboard: images });
-      } else {
-          res.json({ success: false, message: 'Moodboard not found.' });
-      }
-  });
-});
-
-
-
-
-app.get('/upload', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-  });
-
-  app.get('/upload.html', async (req, res) => {
-    const moodboardId = req.query.moodboardId;
-
-    if (!moodboardId) {
-        return res.status(400).send('Moodboard ID is required');
-    }
-
-    try {
-        // Fetch the moodboard data from the database
-        const [rows] = await pool.query('SELECT * FROM moodboards WHERE id = ?', [moodboardId]);
-
-        if (rows.length === 0) {
-            return res.status(404).send('Moodboard not found');
+    const { moodboardId } = req.params;
+    console.log('Received moodboardId:', moodboardId); // Debugging log
+    const query = 'SELECT images FROM moodboards WHERE id = ?';
+    pool.query(query, [moodboardId], (err, results) => {
+        if (err) {
+            console.error('Error fetching moodboard:', err);
+            return res.status(500).json({ success: false, message: 'Server error.' });
         }
+        console.log('Query result:', results); // Debugging log
+        if (results.length > 0) {
+            let images = results[0].images;
+            console.log('Raw images data:', images); // Log raw data
+            // No need to parse if images is already an array or object
+            // images = JSON.parse(images); // Comment out or remove this line
+            res.json({ success: true, moodboard: images });
+        } else {
+            res.json({ success: false, message: 'Moodboard not found.' });
+        }
+    });
+  });
+  
+  app.get('/upload', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'upload.html'));
+    });
+    app.get('/upload.html', async (req, res) => {
+      const moodboardId = req.query.moodboardId;
+      if (!moodboardId) {
+          return res.status(400).send('Moodboard ID is required');
+      }
+      try {
+          // Fetch the moodboard data from the database
+          const [rows] = await pool.query('SELECT * FROM moodboards WHERE id = ?', [moodboardId]);
+          if (rows.length === 0) {
+              return res.status(404).send('Moodboard not found');
+          }
+          const moodboard = rows[0];
+          // Render the upload page with the moodboard data
+          res.render('upload', { moodboard }); // Assuming you are using a templating engine like EJS or Pug
+      } catch (error) {
+          console.error('Error fetching moodboard:', error);
+          res.status(500).send('Internal Server Error');
+      }
+  });
 
-        const moodboard = rows[0];
-
-        // Render the upload page with the moodboard data
-        res.render('upload', { moodboard }); // Assuming you are using a templating engine like EJS or Pug
-    } catch (error) {
-        console.error('Error fetching moodboard:', error);
-        res.status(500).send('Internal Server Error');
+  app.use(cors()); // Enable CORS for all routes
+  app.get('/proxy', async (req, res) => {
+    const imageUrl = req.query.url;
+    if (!imageUrl) {
+        return res.status(400).send('URL is required');
     }
-});
-
-app.use(cors()); // Enable CORS for all routes
-
-app.get('/proxy', async (req, res) => {
-  const imageUrl = req.query.url;
-
-  if (!imageUrl) {
-      return res.status(400).send('URL is required');
-  }
-
-  console.log('Proxy URL:', decodeURIComponent(imageUrl)); // Log URL for debugging
-
-  try {
-      const response = await axios({
-          url: decodeURIComponent(imageUrl), // Decode URL before using
-          method: 'GET',
-          responseType: 'arraybuffer' // Handle binary data
-      });
-
-      // Set the appropriate headers for the response
-      res.set('Content-Type', response.headers['content-type']);
-      res.send(response.data);
-  } catch (error) {
-      console.error('Error fetching the image:', error);
-      res.status(500).send('Error fetching the image');
-  }
-});
-
-
-// app.get('/recommendations', async (req, res) => {
-//   const color = req.query.color;
-
-//   try {
-//     // Query to fetch recommendations based on the color category
-//     const query = `
-//       SELECT title, img 
-//       FROM cottonon 
-//       WHERE color LIKE '%"${color}"%';
-//     `;
-//     const [rows] = await pool.query(query, [color]);
-
-//     res.json(rows);
-//   } catch (error) {
-//     console.error('Error fetching recommendations:', error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// });
-
+    console.log('Proxy URL:', decodeURIComponent(imageUrl)); // Log URL for debugging
+    try {
+        const response = await axios({
+            url: decodeURIComponent(imageUrl), // Decode URL before using
+            method: 'GET',
+            responseType: 'arraybuffer' // Handle binary data
+        });
+        // Set the appropriate headers for the response
+        res.set('Content-Type', response.headers['content-type']);
+        res.send(response.data);
+    } catch (error) {
+        console.error('Error fetching the image:', error);
+        res.status(500).send('Error fetching the image');
+    }
+  });
 
 const User = require('./server/models/user');
   
   //SESSION
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'secretKey',
-    resave: false,
-    saveUninitialized: true
-  }));
+  secret: process.env.SESSION_SECRET || 'secretKey',
+  resave: false,
+  saveUninitialized: true
+}));
   
-  app.use(passport.initialize());
-  app.use(passport.session());
+app.use(passport.initialize());
+app.use(passport.session());
 
-  passport.serializeUser((user, done) => {
-    done(null, user);
-  });
-  
-  passport.deserializeUser((obj, done) => {
-    done(null, obj);
-  });
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
 
-  passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    //callbackURL: 'https://localhost:3000/auth/google/callback',
-    callbackURL: 'https://glacial-coast-30522-eb4abac1d785.herokuapp.com/auth/google/callback'
-    
-  },
-  (token, tokenSecret, profile, done) => {
-    return done(null, profile);
-  }));
+passport.deserializeUser((obj, done) => {
+  done(null, obj);
+});
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  //callbackURL: 'https://localhost:3000/auth/google/callback',
+  callbackURL: 'https://glacial-coast-30522-eb4abac1d785.herokuapp.com/auth/google/callback'
+},
+(token, tokenSecret, profile, done) => {
+  return done(null, profile);
+}));
 
 // ROUTE TO START AUTH PROCESS
 app.get('/auth/google',
 passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login', 'email'] })
 );
 
-
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: '/login.html' }),
   (req, res) => {
     // Successful authentication, redirect to main website page
-    res.redirect('/upload.html');
+    res.redirect('/graphic-tees');
   }
   );
-
-
 
 // app.get('/auth/google/callback',
 //   passport.authenticate('google', { failureRedirect: '/login.html' }),
@@ -1010,76 +945,46 @@ res.send(req.user);
 });
 
 app.get('/check-moodboard-name/:username/:name', (req, res) => {
-  const { username, name } = req.params;
+    const { username, name } = req.params;
+    // Use pool.query to execute the query
+    pool.query(
+        'SELECT * FROM moodboards WHERE user_id = (SELECT id FROM users WHERE username = ?) AND title = ?',
+        [username, name],
+        (err, results) => {
+            if (err) {
+                console.error('Error executing query:', err);
+                return res.status(500).json({ error: 'Error checking moodboard name' });
+            }
+            res.json({ exists: results.length > 0 });
+        }
+    );
+  });
 
-  // Use pool.query to execute the query
-  pool.query(
-      'SELECT * FROM moodboards WHERE user_id = (SELECT id FROM users WHERE username = ?) AND title = ?',
-      [username, name],
-      (err, results) => {
-          if (err) {
-              console.error('Error executing query:', err);
-              return res.status(500).json({ error: 'Error checking moodboard name' });
-          }
-
-          res.json({ exists: results.length > 0 });
-      }
-  );
-});
-
-app.get('/images', (req, res) => {
+app.get('/finspo', (req, res) => {
   pool.query('SELECT id, image_url FROM finspo', (error, results) => {
-      if (error) {
-          console.error('Error fetching images:', error);
-          res.status(500).send('Error fetching images');
-          return;
-      }
+    if (error) {
+      console.error('Error fetching images:', error);
+      res.status(500).send('Error fetching images');
+      return;
+    }
 
-      let html = `
-          <html>
-              <head>
-                  <title>Image Gallery</title>
-                  <style>
-                      .gallery {
-                          display: flex;
-                          flex-wrap: wrap;
-                      }
-                      .gallery div {
-                          margin: 10px;
-                          text-align: center;
-                      }
-                      .gallery img {
-                          max-width: 200px;
-                          height: auto;
-                      }
-                  </style>
-              </head>
-              <body>
-                  <h1>Image Gallery</h1>
-                  <div class="gallery">
-      `;
-
-      results.forEach(row => {
-          html += `
-              <div>
-                  <img src="${row.image_url}" alt="Image ${row.id}">
-                  <p>ID: ${row.id}</p>
-              </div>
-          `;
-      });
-
-      html += `
-                  </div>
-              </body>
-          </html>
-      `;
-
-      res.send(html);
+    const images = results;
+    res.render('finspo', { images });
   });
 });
 
+app.get('/minspo', (req, res) => {
+  pool.query('SELECT id, image_url FROM minspo', (error, results) => {
+    if (error) {
+      console.error('Error fetching images:', error);
+      res.status(500).send('Error fetching images');
+      return;
+    }
 
-
+    const images = results;
+    res.render('minspo', { images });
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
