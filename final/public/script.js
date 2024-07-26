@@ -1,104 +1,101 @@
 document.addEventListener('DOMContentLoaded', () => {
     const signUp = document.getElementById('sign-up-form');
     const loginForm = document.getElementById('login-form');
-    // const saveButton = document.getElementById('save-button');
-    // const uploadForm = document.getElementById('upload-form');
-    // const urlForm = document.getElementById('url-form');
-    // const productsForm = document.getElementById('products-form');
-    // const imageGallery = document.getElementById('image-gallery');
-    // const moodboard = document.getElementById('moodboard');
    
-    
-    // Account creation
+    function showToast(message, type) {
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerText = message;
+        toastContainer.appendChild(toast);
+
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+
+    // ACCOUNT CREATION
     if (signUp) {
         signUp.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault(); 
             
-            // Get the input values
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             try {
-                // Send a POST request to create an account
                 const response = await fetch('/sign-up', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password })
                 });
 
-                // Parse the response data
                 const data = await response.json();
 
                 if (data.success) {
-                    console.log('Account Created!');
-                    alert('Account created successfully!');
-                    // Redirect to login page
+                    showToast('Account created successfully!', 'success');
                     window.location.href = '/login';
                 } else {
-                    console.error('Account Creation Failed:', data.message);
-                    alert(`Account creation failed: ${data.message}`);
+                    showToast('Account Creation Failed', 'error');
                 }
             } catch (error) {
-                console.error('Error creating account:', error);
-                alert('An error occurred while creating the account.');
+                showToast('An error occurred while creating the account.', 'error');
             }
         });
     }
 
-    // Login form submission
+    // LOGIN
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); // Prevent default form submission
+            event.preventDefault(); 
             
-            // Get the input values
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
 
             try {
-                // Send a POST request to log in
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
 
-                // Parse the response data
                 const data = await response.json();
 
                 if (data.success) {
-                    console.log('Signed in!');
-                    alert('Signed in successfully!');
                     localStorage.setItem('username', username);
-                    window.location.href = '/saved.html'; // Redirect to saved moodboards page
-                    //window.location.href = '/deposit.html';
+                    showToast('Logged in successfully!', 'success');
+                    window.location.href = '/graphic-tees';
                 } else {
-                    console.error('Incorrect username or password:', data.message);
-                    alert(`Login failed: ${data.message}`);
+                    showToast('Incorrect credentials', 'error');
                 }
             } catch (error) {
-                console.error('Error signing in:', error);
-                alert('An error occurred while signing in.');
+                showToast('Error signing in. Please try again.', 'error');
             }
         });
     }
-    // script.js
 
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('moodboard-form');
         const titleInput = document.getElementById('title');
         const errorMessage = document.getElementById('error-message');
-
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const title = titleInput.value;
             const username = localStorage.getItem('username');
-
             // Check if moodboard name already exists
             try {
                 const response = await fetch(`/check-moodboard-name/${username}/${encodeURIComponent(title)}`);
                 const data = await response.json();
-
                 if (data.exists) {
                     errorMessage.textContent = 'Moodboard with this name already exists.';
                 } else {
@@ -113,12 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    
-
     $(document).ready(function() {
-        let zIndexCounter = 1; // For managing stacking order of images
-        let imageCounter = 0; // To manage the number of images added
-        let cropper; // Current cropper instance
+        let zIndexCounter = 1; 
+        let imageCounter = 0; 
+        let cropper; 
     
         const cropperContainer = document.getElementById('cropper-container');
         const cropperImage = document.getElementById('cropper-image');
@@ -146,45 +141,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const croppedCanvas = cropper.getCroppedCanvas();
             const croppedImageSrc = croppedCanvas.toDataURL();
     
-            // Append the cropped image to the moodboard
             addImageToMoodboard(croppedImageSrc);
             hideCropper();
         });
     
-        // Function to add image to moodboard
         function addImageToMoodboard(imagesrc) {
             const moodboard = document.getElementById('moodboard');
             const imageUrl = String(imagesrc);
     
-            // Determine if imageUrl needs to be proxied
             const proxyUrl = imageUrl.startsWith('data:') ? imageUrl : `http://localhost:3000/proxy?url=${encodeURIComponent(imageUrl)}`;
     
-            // Create image container
             const imageContainer = document.createElement('div');
             imageContainer.classList.add('image-container');
             imageContainer.style.position = 'absolute';
-            imageContainer.style.left = (50 + imageCounter * 20) + 'px'; // Example initial position
-            imageContainer.style.top = (50 + imageCounter * 20) + 'px'; // Example initial position
+            imageContainer.style.left = (50 + imageCounter * 20) + 'px'; 
+            imageContainer.style.top = (50 + imageCounter * 20) + 'px';
             imageContainer.style.zIndex = zIndexCounter++;
     
-            // Create image element
             const img = document.createElement('img');
             img.src = proxyUrl;
             img.classList.add('moodboard-image');
-            img.style.width = '200px'; // Example initial size
-            img.style.height = '200px'; // Example initial size
-            img.style.objectFit = 'contain'; // Ensure image fits within container
+            img.style.width = '200px'; 
+            img.style.height = '200px'; 
+            img.style.objectFit = 'contain';
     
-            // Create delete button
+            // DELETE BUTTON
             const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = '×'; // Close symbol for delete
+            deleteBtn.innerHTML = '×';
             deleteBtn.classList.add('delete-btn');
             deleteBtn.addEventListener('click', function() {
-                imageContainer.remove(); // Remove image container on delete button click
-                removeFromLocalStorage(proxyUrl); // Remove image from localStorage
+                
+                removeFromLocalStorage(proxyUrl); 
+                imageContainer.remove(); 
             });
     
-            // Create crop button
+            // CROP BUTTON
             const cropBtn = document.createElement('button');
             cropBtn.innerHTML = 'Crop';
             cropBtn.classList.add('crop-btn');
@@ -192,38 +183,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCropper(img);
             });
     
-            // Append image and buttons to container
             imageContainer.appendChild(img);
             imageContainer.appendChild(deleteBtn);
             imageContainer.appendChild(cropBtn);
     
-            // Append image container to moodboard
             moodboard.appendChild(imageContainer);
     
-            // Make image container draggable using jQuery UI
+            // IMAGE DRAGGING
             $(imageContainer).draggable({
                 containment: 'parent',
-                scroll: false // Disable scrolling while dragging
+                scroll: false
             });
             $(img).resizable({
-                aspectRatio: true, // Maintain aspect ratio while resizing
-                handles: 'n, e, s, w, ne, se, sw, nw' // Show resize handles on all sides
+                aspectRatio: true,
+                handles: 'n, e, s, w, ne, se, sw, nw' 
             });
     
             imageCounter++;
         }
     
-        // Function to remove image URL from localStorage
+        //REMOVING IMAGE FROM LOCAL STORAGE
         function removeFromLocalStorage(imageUrl) {
             let savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
-           
-            savedImages = savedImages.filter(url => url !== imageUrl); // Filter out the deleted image URL
-            //localStorage.removeItem('savedImages');
-                //document.getElementById('moodboard').innerHTML = '';
-            localStorage.setItem('newMoodboardImages', JSON.stringify(savedImages)); // Update localStorage
+            savedImages = savedImages.filter(item => item.src !== imageUrl); 
+            localStorage.setItem('newMoodboardImages', JSON.stringify(savedImages)); 
+            console.log('LocalStorage after removal:', JSON.parse(localStorage.getItem('newMoodboardImages')));
         }
     
-        // Event listener for form submission (example with file input)
         const uploadForm = document.getElementById('upload-form');
         uploadForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -233,14 +219,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         addImageToMoodboard(e.target.result);
-                        addToLocalStorage(e.target.result); // Add uploaded image URL to localStorage
+                        addToLocalStorage(e.target.result);
                     };
                     reader.readAsDataURL(file);
                 });
             }
         });
     
-        // Event listener for URL input (example)
         const urlForm = document.getElementById('url-form');
         urlForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -248,36 +233,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = urlInput.value.trim();
             if (url) {
                 addImageToMoodboard(url);
-                addToLocalStorage(url); // Add URL input image to localStorage
+                addToLocalStorage(url);
                 urlInput.value = '';
             }
         });
     
-        // Function to add image URL to localStorage
         function addToLocalStorage(imageUrl) {
             let savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
             savedImages.push(imageUrl);
             localStorage.setItem('newMoodboardImages', JSON.stringify(savedImages));
         }
     
-        // Load existing images from localStorage or another source (example)
         const savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
         savedImages.forEach(imageUrl => {
             addImageToMoodboard(imageUrl);
         });
     
-        // Save moodboard button click event
         document.getElementById('save-button').addEventListener('click', async () => {
             const username = localStorage.getItem('username');
             if (!username) {
-                alert('No username found, please log in.');
-                window.location.href = 'login.html'; // Redirect to login if no username found
+                showToast('No username found, please log in.', 'error');
+                window.location.href = 'login.html';
                 return;
             }
     
             const moodboardName = prompt('Enter a name for your moodboard:');
             if (!moodboardName) {
-                alert('Moodboard name is required.');
+                showToast('Moodboard name is required.', 'error');
                 return;
             }
 
@@ -293,17 +275,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
     
                 if (data.exists) {
-                    alert('Moodboard with this name already exists.');
+                    showToast('Moodboard with this name already exists.', 'error');
                     return;
                 }
     
             const moodboardImages = Array.from(document.querySelectorAll('#moodboard .image-container')).map(container => {
                 const img = container.querySelector('img');
                 const position = {
-                    top: container.style.top, // Capture the top position
-                    left: container.style.left, // Capture the left position
-                    width: img.style.width, // Capture the width
-                    height: img.style.height // Capture the height
+                    top: container.style.top, 
+                    left: container.style.left, 
+                    width: img.style.width, 
+                    height: img.style.height 
                 };
     
                 return {
@@ -326,22 +308,15 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.text())
             .then(message => {
                 alert(message);
-                // Clear the images from local storage and DOM after saving
                 localStorage.removeItem('newMoodboardImages');
                 document.getElementById('moodboard').innerHTML = '';
             })
             .catch(err => {
-                console.error('Failed to save moodboard:', err);
-                alert('Error saving moodboard.');
+                showToast('Error saving moodboard.', 'error');
             });
-
         } catch (err) {
-            console.error('Error checking moodboard name:', err);
-            alert('Error checking moodboard name.');
+            showToast('Error checking moodboard name.', 'error');
         }
-        
         });
-    
-});
-
+    });
 });
