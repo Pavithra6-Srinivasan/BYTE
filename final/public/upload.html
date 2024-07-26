@@ -7,10 +7,9 @@
     
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://unpkg.com/cropperjs/dist/cropper.css">
-
     <link rel="stylesheet" href="stylebackup.css">
-   
 </head>
+
 <body>
     <h1>BYTE</h1>
     <div class="container">
@@ -19,8 +18,8 @@
                 <li><a href="graphic-tees">SEARCH</a></li>
                 <li><a href="upload.html">NEW MOODBOARD</a></li>
                 <li><a href="saved.html">SAVED MOODBOARDS</a></li>
+                <li><a href="finspo.html">STYLE GUIDE</a></li>
             </ul>
-
             <div class="upload">
                 <p>Upload Images</p>
                 <form style="padding-left: 60px;"  id="upload-form" enctype="multipart/form-data">
@@ -34,44 +33,33 @@
                     <input type="url" name="url" placeholder="Enter image URL"><br><br>
                     <button class="boxbtn" style="width: 65%; margin-left: 25px;" type="submit">Add Image</button>
                 </form>
-            </div>
-            
-            <!-- <div class="image-gallery" id="image-gallery"></div> -->
+            </div>   
         </nav>
+
         <main class="content"> 
             <section id="new-moodboard">
-                <!-- <h2 style="font-size:30px;">Create your New Moodboard</h2> -->
                 <div id="moodboard" class="moodboard"></div>
             <button class="savebtn" type="button" id="save-button">SAVE</button>
         </section>
-    
-        </div>
-  
         </main>
     </div>
-    <div id="cropper-container" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center;">
-        <img id="cropper-image" src="" style="max-width: 90%; max-height: 90%;">
-        <button id="crop-button">Crop</button>
-    </div>
-    </div>
- 
+
+    <div id=" croppper-container" style ="display:none; position:fixed; top:0; left: 0; width:100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items:center;">
+        <img id = "cropper-image" src = "" style = "max-width:90%; max-height:90%">
+        <button id = "crop-button" > Crop</button>
+    </div>;
+
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script>
     <script src="https://unpkg.com/cropperjs"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
     <script src="https://unpkg.com/color-thief/dist/color-thief.umd.js"></script>
     <script src = "script.js"></script>
+    
     <script>
-    //   function getQueryParams() {
-    //         const params = new URLSearchParams(window.location.search);
-    //         return {
-    //             moodboardId: params.get('moodboardId')
-    //         };
-    //     }
 
-        const urlParams = new URLSearchParams(window.location.search);
+const urlParams = new URLSearchParams(window.location.search);
 const moodboardId = urlParams.get('moodboardId');
-
 function getQueryParams() {
     const query = window.location.search.substring(1);
     const vars = query.split("&");
@@ -82,8 +70,6 @@ function getQueryParams() {
     });
     return params;
 }
-
-
         // Fetch moodboard data from the server
         async function fetchMoodboard() {
             const { moodboardId } = getQueryParams();
@@ -103,7 +89,6 @@ function getQueryParams() {
                 console.error('Moodboard ID is missing.');
             }
         }
-
         // Function to render moodboard images on the page
         function renderMoodboard(images) {
             const container = document.getElementById('moodboard-container');
@@ -114,15 +99,9 @@ function getQueryParams() {
                 container.appendChild(img);
             });
         }
-
         // Fetch and display moodboard on page load
         fetchMoodboard();
-
-    
       </script>
-      
-
-    
-    
+</body>
 </body>
 </html>
