@@ -24,24 +24,27 @@
                 <input class="search-bar" type="text" name="search" placeholder="Search...">
                 </div>
                 
-                <div id="gender-buttons">
-                  <button class="girl" onclick="filterGender('female')">FEMALE</button>
-                  <button class="boy" onclick="filterGender('male')">MALE</button>
-                </div>
-
                 <div>
+                <button class="tiny-button">!</button>
+                <div class="hover-message" id="hoverMessage">Select category of clothing first, gender second. Then, proceed to filter colour and price.</div>
+
                 <button onclick="location.href='/graphic-tees'" class="navigation-button">Graphic Tees</button>
                 <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
                 <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
                 <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
                 <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
                 </div>
-                <div>
+                <div style="margin-left: 25px;">
                 <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
                 <button onclick="location.href='/tops'" class="navigation-button">Tops</button>
                 <button onclick="location.href='/pants'" class="navigation-button">Pants</button>
                 <button onclick="location.href='/dresses'" class="navigation-button">Dresses</button>
                 <button onclick="location.href='/jeans'" class="navigation-button">Jeans</button>
+                </div>
+
+                <div id="gender-buttons">
+                  <button class="girl" onclick="filterGender('female')">FEMALE</button>
+                  <button class="boy" onclick="filterGender('male')">MALE</button>
                 </div>
                 
                 <div>
