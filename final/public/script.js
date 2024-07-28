@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     const signUp = document.getElementById('sign-up-form');
     const loginForm = document.getElementById('login-form');
-   
+  
     function showToast(message, type) {
         let toastContainer = document.getElementById('toast-container');
+
         if (!toastContainer) {
             toastContainer = document.createElement('div');
             toastContainer.id = 'toast-container';
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toast.className = `toast ${type}`;
         toast.innerText = message;
         toastContainer.appendChild(toast);
-
         toast.classList.add('show');
 
         setTimeout(() => {
@@ -23,62 +23,75 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => toast.remove(), 300);
         }, 5000);
     }
-
-    // ACCOUNT CREATION
+ 
+    // Account creation
     if (signUp) {
         signUp.addEventListener('submit', async (event) => {
             event.preventDefault(); 
             
+            // Get the input values
             const username = document.getElementById('username').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
 
             try {
+                // Send a POST request to create an account
                 const response = await fetch('/sign-up', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, email, password })
                 });
 
+                // Parse the response data
                 const data = await response.json();
 
                 if (data.success) {
+                    console.log('Account Created!');
                     showToast('Account created successfully!', 'success');
                     window.location.href = '/login';
                 } else {
+                    console.error('Account Creation Failed:', data.message);
                     showToast('Account Creation Failed', 'error');
                 }
             } catch (error) {
+                console.error('Error creating account:', error);
                 showToast('An error occurred while creating the account.', 'error');
             }
         });
     }
 
-    // LOGIN
+    // Login form submission
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
-            event.preventDefault(); 
+            event.preventDefault(); // Prevent default form submission
             
+            // Get the input values
             const username = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
 
             try {
+                // Send a POST request to log in
                 const response = await fetch('/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
 
+                // Parse the response data
                 const data = await response.json();
 
                 if (data.success) {
-                    localStorage.setItem('username', username);
+                    console.log('Signed in!');
                     showToast('Logged in successfully!', 'success');
+                    sessionStorage.setItem('username', username);
                     window.location.href = '/graphic-tees';
+                    
                 } else {
+                    console.error('Incorrect username or password:', data.message);
                     showToast('Incorrect credentials', 'error');
                 }
             } catch (error) {
+                console.error('Error signing in:', error);
                 showToast('Error signing in. Please try again.', 'error');
             }
         });
@@ -88,20 +101,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('moodboard-form');
         const titleInput = document.getElementById('title');
         const errorMessage = document.getElementById('error-message');
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const title = titleInput.value;
-            const username = localStorage.getItem('username');
+            const username = sessionStorage.getItem('username');
+
             // Check if moodboard name already exists
             try {
                 const response = await fetch(`/check-moodboard-name/${username}/${encodeURIComponent(title)}`);
                 const data = await response.json();
+
                 if (data.exists) {
                     errorMessage.textContent = 'Moodboard with this name already exists.';
                 } else {
                     errorMessage.textContent = '';
-                    // Proceed with saving the new moodboard
-                    // Add your logic here to save the new moodboard
+                    
                 }
             } catch (err) {
                 console.error('Error checking moodboard name:', err);
@@ -141,41 +156,67 @@ document.addEventListener('DOMContentLoaded', () => {
             const croppedCanvas = cropper.getCroppedCanvas();
             const croppedImageSrc = croppedCanvas.toDataURL();
     
+            // Append the cropped image to the moodboard
             addImageToMoodboard(croppedImageSrc);
+            saveCroppedImage(croppedImageSrc);
+            
             hideCropper();
         });
-    
-        function addImageToMoodboard(imagesrc) {
+
+        function saveCroppedImage(croppedImageSrc) {
+            // Create an image object
+            const imageObject = { src: croppedImageSrc };
+            
+            // Retrieve existing images from sessionStorage, or initialize an empty array
+            let newMoodboardImages = JSON.parse(sessionStorage.getItem('newMoodboardImages')) || [];
+            
+            // Add the new cropped image object to the array
+            newMoodboardImages.push(imageObject);
+            
+            // Save the updated array back to sessionStorage
+            sessionStorage.setItem('newMoodboardImages', JSON.stringify(newMoodboardImages));
+        }
+           
+        // Function to add image to moodboard
+        function addImageToMoodboard(imagesrc, position = {}) {
+            console.log('imagesrc:', imagesrc);
             const moodboard = document.getElementById('moodboard');
             const imageUrl = String(imagesrc);
     
-            const proxyUrl = imageUrl.startsWith('data:') ? imageUrl : `http://localhost:3000/proxy?url=${encodeURIComponent(imageUrl)}`;
-    
+            // Determine if imageUrl needs to be proxied
+            const proxyUrl = imageUrl.startsWith('data:') ? imageUrl : `https://glacial-coast-30522-eb4abac1d785.herokuapp.com/proxy?url=${encodeURIComponent(imageUrl)}`;
+            console.log('Proxy URL:', proxyUrl);
+            // Create image container
             const imageContainer = document.createElement('div');
             imageContainer.classList.add('image-container');
             imageContainer.style.position = 'absolute';
-            imageContainer.style.left = (50 + imageCounter * 20) + 'px'; 
-            imageContainer.style.top = (50 + imageCounter * 20) + 'px';
+           
+            imageContainer.style.left = position.left || (50 + imageCounter * 20) + 'px'; 
+            imageContainer.style.top = position.top || (50 + imageCounter * 20) + 'px'; 
+            imageContainer.style.width = position.width || '200px';
+            imageContainer.style.height = position.height || '200px'; 
             imageContainer.style.zIndex = zIndexCounter++;
-    
+        
+            // Create image element
             const img = document.createElement('img');
             img.src = proxyUrl;
             img.classList.add('moodboard-image');
             img.style.width = '200px'; 
             img.style.height = '200px'; 
-            img.style.objectFit = 'contain';
+            img.style.objectFit = 'contain'; 
     
-            // DELETE BUTTON
+            // Create delete button
             const deleteBtn = document.createElement('button');
             deleteBtn.innerHTML = '×';
             deleteBtn.classList.add('delete-btn');
             deleteBtn.addEventListener('click', function() {
-                
-                removeFromLocalStorage(proxyUrl); 
-                imageContainer.remove(); 
+                 // Remove image container on delete button click
+                removeFromsessionStorage(imageUrl) ;
+                removeFromsessionStorage(proxyUrl) ;
+                imageContainer.remove();
             });
     
-            // CROP BUTTON
+            // Create crop button
             const cropBtn = document.createElement('button');
             cropBtn.innerHTML = 'Crop';
             cropBtn.classList.add('crop-btn');
@@ -183,13 +224,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCropper(img);
             });
     
+            // Append image and buttons to container
             imageContainer.appendChild(img);
             imageContainer.appendChild(deleteBtn);
             imageContainer.appendChild(cropBtn);
     
+            // Append image container to moodboard
             moodboard.appendChild(imageContainer);
     
-            // IMAGE DRAGGING
+            // Make image container draggable using jQuery UI
             $(imageContainer).draggable({
                 containment: 'parent',
                 scroll: false
@@ -197,19 +240,23 @@ document.addEventListener('DOMContentLoaded', () => {
             $(img).resizable({
                 aspectRatio: true,
                 handles: 'n, e, s, w, ne, se, sw, nw' 
-            });
-    
+            });  
             imageCounter++;
         }
     
-        //REMOVING IMAGE FROM LOCAL STORAGE
-        function removeFromLocalStorage(imageUrl) {
-            let savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
-            savedImages = savedImages.filter(item => item.src !== imageUrl); 
-            localStorage.setItem('newMoodboardImages', JSON.stringify(savedImages)); 
-            console.log('LocalStorage after removal:', JSON.parse(localStorage.getItem('newMoodboardImages')));
+        // Function to remove image URL from sessionStorage
+        function removeFromsessionStorage(imageUrl) {
+            let savedImages = JSON.parse(sessionStorage.getItem('newMoodboardImages')) || [];
+            console.log('URL to remove:', imageUrl);
+            console.log('sessionStorage before removal:', savedImages);
+            
+            savedImages = savedImages.filter(item => item.src !== imageUrl); // Check if item.src is used
+        
+            console.log('Filtered images:', savedImages);
+            sessionStorage.setItem('newMoodboardImages', JSON.stringify(savedImages));
+            console.log('sessionStorage after removal:', JSON.parse(sessionStorage.getItem('newMoodboardImages')));
         }
-    
+               
         const uploadForm = document.getElementById('upload-form');
         uploadForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -219,13 +266,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         addImageToMoodboard(e.target.result);
-                        addToLocalStorage(e.target.result);
+                        addTosessionStorage(e.target.result); 
                     };
                     reader.readAsDataURL(file);
                 });
             }
         });
-    
+
+        // Event listener for URL input (example)
         const urlForm = document.getElementById('url-form');
         urlForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -233,27 +281,31 @@ document.addEventListener('DOMContentLoaded', () => {
             const url = urlInput.value.trim();
             if (url) {
                 addImageToMoodboard(url);
-                addToLocalStorage(url);
+                addTosessionStorage(url); 
                 urlInput.value = '';
             }
         });
-    
-        function addToLocalStorage(imageUrl) {
-            let savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
-            savedImages.push(imageUrl);
-            localStorage.setItem('newMoodboardImages', JSON.stringify(savedImages));
+
+        // Function to add image URL to sessionStorage
+        function addTosessionStorage(imageUrl) {
+            let savedImages = JSON.parse(sessionStorage.getItem('newMoodboardImages')) || [];
+            savedImages.push({ src: imageUrl });
+            sessionStorage.setItem('newMoodboardImages', JSON.stringify(savedImages));
         }
-    
-        const savedImages = JSON.parse(localStorage.getItem('newMoodboardImages')) || [];
-        savedImages.forEach(imageUrl => {
-            addImageToMoodboard(imageUrl);
+
+        // Load existing images from sessionStorage or another source (example)
+        const savedImages = JSON.parse(sessionStorage.getItem('newMoodboardImages'));
+        savedImages.forEach(imageData => {
+            addImageToMoodboard(imageData.src, imageData.position);
+        
         });
     
+        // Save moodboard button click event
         document.getElementById('save-button').addEventListener('click', async () => {
-            const username = localStorage.getItem('username');
+            const username = sessionStorage.getItem('username');
             if (!username) {
                 showToast('No username found, please log in.', 'error');
-                window.location.href = 'login.html';
+                window.location.href = 'login.html'; // Redirect to login if no username found
                 return;
             }
     
@@ -268,7 +320,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`/check-moodboard-name/${username}/${encodeURIComponent(moodboardName)}`);
                 
                 if (!response.ok) {
-                    // Handle non-200 responses
                     throw new Error(`Server responded with status ${response.status}`);
                 }
     
@@ -293,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     position: position
                 };
             });
-    
+               
             fetch('/save-moodboard', {
                 method: 'POST',
                 headers: {
@@ -308,17 +359,22 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.text())
             .then(message => {
                 alert(message);
-                localStorage.removeItem('newMoodboardImages');
+                // Clear the images from local storage and DOM after saving
+                sessionStorage.removeItem('newMoodboardImages');
                 document.getElementById('moodboard').innerHTML = '';
             })
             .catch(err => {
+                console.error('Failed to save moodboard:', err);
                 showToast('Error saving moodboard.', 'error');
+
             });
+
         } catch (err) {
+            console.error('Error checking moodboard name:', err);
             showToast('Error checking moodboard name.', 'error');
-        }
+        }       
         });
-    });
+});
 });
 
 document.addEventListener('DOMContentLoaded', (event) => {
