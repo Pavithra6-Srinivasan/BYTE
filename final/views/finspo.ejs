@@ -52,5 +52,16 @@
             <p>No images found.</p>
         <% } %>
     </div>
+
+    <script>
+        function checkSessionStorage() {
+            const username = sessionStorage.getItem('username');
+            if (!username) {
+                window.location.href = '/login.html'; 
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSessionStorage);
+    </script>
 </body>
 </html>
