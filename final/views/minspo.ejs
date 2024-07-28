@@ -16,8 +16,8 @@
             text-align: center;
         }
         .gallery img {
-            width: 250px; /* Fixed width */
-            height: 300px; /* Fixed height */
+            width: 250px; 
+            height: 300px; 
             object-fit: cover;
         }
     </style>
@@ -51,5 +51,15 @@
             <p>No images found.</p>
         <% } %>
     </div>
+    <script>
+        function checkSessionStorage() {
+            const username = sessionStorage.getItem('username');
+            if (!username) {
+                window.location.href = '/login.html'; 
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSessionStorage);
+    </script>
 </body>
 </html>
