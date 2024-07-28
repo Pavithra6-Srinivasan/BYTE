@@ -1,10 +1,12 @@
 const mysql = require('mysql2');
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const cheerio = require('cheerio');
 require('dotenv').config();
 
 const pool = mysql.createConnection({
-    uri: process.env.JDBC_DATABASE_URL,
+    uri: process.env.JDBC_DATABASE_URL
 });
+
 
 pool.connect((err) => {
     if (err) {
@@ -14,82 +16,67 @@ pool.connect((err) => {
     console.log('Connected to jawsdb');
 });
 
-async function scrapeAndStoreImages(url) {
+
+async function scrapeAndStoreProductData(url) {
     try {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
-        await page.goto(url, { waitUntil: 'networkidle2' });
+        // Fetch HTML content from the provided URL
+        const { data } = await axios.get(url);
+        // Load the HTML content into Cheerio
+        const $ = cheerio.load(data);
+        const productTile = $('.product-tile');
 
-        await autoScroll(page);
+        productTile.each((index, element) => {
+            try {
+                const name = $(element).find('.name-link').attr('title').trim();
+                const title = name.replace('Go to Product:', '');
 
-        const images = await page.evaluate(() => {
-            const imageElements = document.querySelectorAll('img');
-            return Array.from(imageElements).map(img => img.src).filter(src => src);
-        });
+                const imgElement = $(element).find('.thumb-link img');
+                const imgSrc = imgElement.attr('src') || imgElement.attr('data-src') || imgElement.attr('data-srcset');
+                const urlElement = $(element).find('.thumb-link');
+                const pageUrl = urlElement.attr('href') || urlElement.attr('data-orighref');
+               
+                const priceWithCurrency = $(element).find('.product-pricing').text().trim();
+                const price = parseFloat(priceWithCurrency.replace(/[^\d.]/g, ''));
 
-        console.log('Found images:', images);
+                const colorElements = $(element).find('.product-colours-available').children();
 
-        for (const imageUrl of images) {
-            await new Promise((resolve, reject) => {
-                const query = 'SELECT COUNT(*) as count FROM minspo WHERE image_url = ?';
-                pool.query(query, [imageUrl], (err, results) => {
-                    if (err) {
-                        console.error('Error querying data from MySQL:', err);
-                        reject(err);
-                        return;
-                    }
-
-                    if (results[0].count === 0) {
-                        const insertQuery = 'INSERT INTO minspo (image_url) VALUES (?)';
-                        pool.query(insertQuery, [imageUrl], (err, results) => {
-                            if (err) {
-                                console.error('Error inserting data into MySQL:', err);
-                                reject(err);
-                                return;
-                            }
-                            console.log('Inserted image URL:', imageUrl);
-                            resolve();
-                        });
-                    } else {
-                        console.log('Image URL already exists:', imageUrl);
-                        resolve();
+                console.log('Color Elements:', colorElements.html()); 
+                
+                const colours = [];
+              
+                    colorElements.each((index, Element) => {
+                    const classList = $(Element).attr('class').split(' ');
+                    console.log(`Class List for element ${index + 1}:`, classList); 
+                
+                    const colorClass = classList.find(cls => cls.startsWith('swatch-'));
+                    console.log('Color Class:', colorClass); 
+                
+                    if (colorClass) {
+                        colours.push(colorClass.replace('swatch-', ''));
                     }
                 });
-            });
-        }
+                
+                console.log('Extracted Colours:', colours);
+                
+                // Insert product data into the database
+                const query = 'INSERT INTO cottonon (title, img, pricing, urlpg, colour) VALUES (?, ?, ?, ?, ?)';
+                pool.query(query, [title, imgSrc, price, pageUrl, JSON.stringify(colours)], (err, results) => {
+                    if (err) {
+                        console.error('Error inserting data into MySQL:', err);
+                        return;
+                    }
+                    console.log('Inserted product data:', results.insertId);
+                });
 
-        await browser.close();
+                console.log({ title, imgSrc, price, pageUrl, colours });
+            } catch (error) {
+                console.error('Error extracting product details:', error);
+            }
+        });
     } catch (error) {
         console.error('Error scraping the website:', error);
     }
 }
 
-async function autoScroll(page) {
-    await page.evaluate(async () => {
-        await new Promise((resolve, reject) => {
-            let totalHeight = 0;
-            const distance = 100;
-            const delay = 100;
-            let previousHeight = 0;
-
-            const timer = setInterval(() => {
-                window.scrollBy(0, distance);
-                totalHeight += distance;
-
-                const newHeight = document.body.scrollHeight;
-                if (newHeight === previousHeight) {
-                    clearInterval(timer);
-                    resolve();
-                } else {
-                    previousHeight = newHeight;
-                }
-            }, delay);
-        });
-    });
-}
-
-// Example usage
-const url = 'https://www.pinterest.com/search/pins/?q=judebelligham%20street%20style&rs=typed';
-(async () => {
-    await scrapeAndStoreImages(url);
-})();
+const url = 'https://cottonon.com/SG/co/men/mens-clothing/mens-fleece-knits/';
+scrapeAndStoreProductData(url);
