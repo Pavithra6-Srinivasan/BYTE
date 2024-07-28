@@ -320,3 +320,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    const button = document.querySelector('.tiny-button');
+    const hoverMessage = document.getElementById('hoverMessage');
+
+    button.addEventListener('mouseover', () => {
+        hoverMessage.style.display = 'block';
+    });
+
+    button.addEventListener('mouseout', () => {
+        hoverMessage.style.display = 'none';
+    });
+});
