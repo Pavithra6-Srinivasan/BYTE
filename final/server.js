@@ -3,7 +3,6 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const fs = require('fs');
-
 const cors = require('cors'); 
 const axios = require('axios');
 const folderId = `folder-${Date.now()}`;
@@ -25,7 +24,7 @@ require('dotenv').config();
 const pool = mysql.createConnection({
   uri: process.env.JDBC_DATABASE_URL,
    waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 20,
     queueLimit: 0,
     connectTimeout: 10000,
     
@@ -59,11 +58,12 @@ function isAuthenticated(req, res, next) {
       res.redirect('/login.html'); // Redirect to login page
   }
 }
+
 // Apply the middleware to routes that require authentication
 app.get('/saved', isAuthenticated, (req, res) => {
-  // Serve the saved moodboards page
   res.sendFile(path.join(__dirname, 'saved.html'));
 });
+
 
 // ACCOUNT CREATION
 app.post('/sign-up', (req, res) => {
@@ -114,6 +114,7 @@ app.post('/sign-up', (req, res) => {
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
+
 
 function generateToken(userId) {
   const crypto = require('crypto');
@@ -202,6 +203,159 @@ app.get('/graphic-tees', (req, res) => {
     } else {
       // IF NOT, FULL PAGE
       res.render('graphic-tees', { products: results });
+    }
+  });
+});
+
+app.get('/sandals', (req, res) => {
+  const { search, colour, minPrice, maxPrice, gender } = req.query;
+
+  let query = "SELECT title, pricing, img, colour, urlpg, gender FROM cottonon WHERE category = 'sandals'";
+  const params = [];
+
+  if (search) {
+    query += " AND title LIKE ?";
+    params.push(`%${search}%`);
+  }
+  if (colour) {
+    query += " AND JSON_CONTAINS(colour, ?)";
+    params.push(`"${colour}"`);
+  }
+  if (minPrice) {
+    query += " AND pricing >= ?";
+    params.push(minPrice);
+  }
+  if (maxPrice) {
+    query += " AND pricing <= ?";
+    params.push(maxPrice);
+  }
+  if (gender) {
+    query += " AND gender = ?";
+    params.push(gender);
+  }
+
+  pool.query(query, params, (error, results) => {
+    if (error) {
+      console.error('Error fetching cottonon:', error);
+      res.status(500).send('Error fetching cottonon');
+      return;
+    }
+
+    if (req.xhr) {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('sandals-list', { products: results }, (err, html) => {
+        if (err) {
+          console.error('Error rendering product list:', err);
+          res.status(500).send('Error rendering product list');
+          return;
+        }
+        res.send(html);
+      });
+    } else {
+      // IF NOT, FULL PAGE
+      res.render('sandals', { products: results });
+    }
+  });
+});
+
+app.get('/shoes', (req, res) => {
+  const { search, colour, minPrice, maxPrice, gender } = req.query;
+
+  let query = "SELECT title, pricing, img, colour, urlpg, gender FROM cottonon WHERE category = 'shoes'";
+  const params = [];
+
+  if (search) {
+    query += " AND title LIKE ?";
+    params.push(`%${search}%`);
+  }
+  if (colour) {
+    query += " AND JSON_CONTAINS(colour, ?)";
+    params.push(`"${colour}"`);
+  }
+  if (minPrice) {
+    query += " AND pricing >= ?";
+    params.push(minPrice);
+  }
+  if (maxPrice) {
+    query += " AND pricing <= ?";
+    params.push(maxPrice);
+  }
+  if (gender) {
+    query += " AND gender = ?";
+    params.push(gender);
+  }
+
+  pool.query(query, params, (error, results) => {
+    if (error) {
+      console.error('Error fetching cottonon:', error);
+      res.status(500).send('Error fetching cottonon');
+      return;
+    }
+
+    if (req.xhr) {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('shoes-list', { products: results }, (err, html) => {
+        if (err) {
+          console.error('Error rendering product list:', err);
+          res.status(500).send('Error rendering product list');
+          return;
+        }
+        res.send(html);
+      });
+    } else {
+      // IF NOT, FULL PAGE
+      res.render('shoes', { products: results });
+    }
+  });
+});
+
+app.get('/jewellery', (req, res) => {
+  const { search, colour, minPrice, maxPrice, gender } = req.query;
+
+  let query = "SELECT title, pricing, img, colour, urlpg, gender FROM cottonon WHERE category = 'jewellery'";
+  const params = [];
+
+  if (search) {
+    query += " AND title LIKE ?";
+    params.push(`%${search}%`);
+  }
+  if (colour) {
+    query += " AND JSON_CONTAINS(colour, ?)";
+    params.push(`"${colour}"`);
+  }
+  if (minPrice) {
+    query += " AND pricing >= ?";
+    params.push(minPrice);
+  }
+  if (maxPrice) {
+    query += " AND pricing <= ?";
+    params.push(maxPrice);
+  }
+  if (gender) {
+    query += " AND gender = ?";
+    params.push(gender);
+  }
+
+  pool.query(query, params, (error, results) => {
+    if (error) {
+      console.error('Error fetching cottonon:', error);
+      res.status(500).send('Error fetching cottonon');
+      return;
+    }
+
+    if (req.xhr) {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('jewellery-list', { products: results }, (err, html) => {
+        if (err) {
+          console.error('Error rendering product list:', err);
+          res.status(500).send('Error rendering product list');
+          return;
+        }
+        res.send(html);
+      });
+    } else {
+      // IF NOT, FULL PAGE
+      res.render('jewellery', { products: results });
     }
   });
 });
@@ -664,7 +818,6 @@ function ensureUserDirectory(username) {
   }
 }
 
-
 app.post('/save-moodboard', (req, res) => {
     const { username, name, images } = req.body;
 
@@ -688,17 +841,7 @@ app.post('/save-moodboard', (req, res) => {
           position: image.position
       }));
 
-        // const imagePaths = images.map((image, index) => {
-        //   const base64Data = image.src.replace(/^data:image\/\w+;base64,/, "");
-        //   const extension = image.src.split(';')[0].split('/')[1];
-        //   const filePath = path.join(uploadDir, `moodboard_${username}_${Date.now()}_${index}.${extension}`);
-
-        //   fs.writeFileSync(filePath, base64Data, 'base64');
-        //   return { path: filePath, position: image.position };
-        // });
-
         const imagesJson = JSON.stringify(imagePaths);
-      //  const imagesJson = JSON.stringify(images);
 
         const insertMoodboardQuery = 'INSERT INTO moodboards (user_id, title, images) VALUES (?, ?, ?)';
         pool.query(insertMoodboardQuery, [userId, name, imagesJson], (err, result) => {
@@ -750,6 +893,7 @@ app.get('/list-moodboards/:username', (req, res) => {
   });
 });
 
+
 app.get('/moodboard/:username/:moodboardId', (req, res) => {
   const { username, moodboardId } = req.params;
 
@@ -776,159 +920,130 @@ app.get('/moodboard/:username/:moodboardId', (req, res) => {
 });
 
 app.get('/get-moodboard/:moodboardId', (req, res) => {
-    const { moodboardId } = req.params;
-    console.log('Received moodboardId:', moodboardId); // Debugging log
-    const query = 'SELECT images FROM moodboards WHERE id = ?';
-    pool.query(query, [moodboardId], (err, results) => {
-        if (err) {
-            console.error('Error fetching moodboard:', err);
-            return res.status(500).json({ success: false, message: 'Server error.' });
-        }
-        console.log('Query result:', results); // Debugging log
-        if (results.length > 0) {
-            let images = results[0].images;
-            console.log('Raw images data:', images); // Log raw data
-            // No need to parse if images is already an array or object
-            // images = JSON.parse(images); // Comment out or remove this line
-            res.json({ success: true, moodboard: images });
-        } else {
-            res.json({ success: false, message: 'Moodboard not found.' });
-        }
-    });
+  const { moodboardId } = req.params;
+  console.log('Received moodboardId:', moodboardId); // Debugging log
+
+  const query = 'SELECT images FROM moodboards WHERE id = ?';
+
+  pool.query(query, [moodboardId], (err, results) => {
+      if (err) {
+          console.error('Error fetching moodboard:', err);
+          return res.status(500).json({ success: false, message: 'Server error.' });
+      }
+
+      console.log('Query result:', results); 
+
+      if (results.length > 0) {
+          let images = results[0].images;
+          console.log('Raw images data:', images);
+          res.json({ success: true, moodboard: images });
+      } else {
+          res.json({ success: false, message: 'Moodboard not found.' });
+      }
   });
-  
-  app.get('/upload', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'upload.html'));
-    });
-    app.get('/upload.html', async (req, res) => {
-      const moodboardId = req.query.moodboardId;
-      if (!moodboardId) {
-          return res.status(400).send('Moodboard ID is required');
-      }
-      try {
-          // Fetch the moodboard data from the database
-          const [rows] = await pool.query('SELECT * FROM moodboards WHERE id = ?', [moodboardId]);
-          if (rows.length === 0) {
-              return res.status(404).send('Moodboard not found');
-          }
-          const moodboard = rows[0];
-          // Render the upload page with the moodboard data
-          res.render('upload', { moodboard }); // Assuming you are using a templating engine like EJS or Pug
-      } catch (error) {
-          console.error('Error fetching moodboard:', error);
-          res.status(500).send('Internal Server Error');
-      }
+});
+
+app.get('/upload', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'upload.html'));
   });
 
-  app.use(cors()); // Enable CORS for all routes
-  app.get('/proxy', async (req, res) => {
-    const imageUrl = req.query.url;
-    if (!imageUrl) {
-        return res.status(400).send('URL is required');
-    }
-    console.log('Proxy URL:', decodeURIComponent(imageUrl)); // Log URL for debugging
-    try {
-        const response = await axios({
-            url: decodeURIComponent(imageUrl), // Decode URL before using
-            method: 'GET',
-            responseType: 'arraybuffer' // Handle binary data
-        });
-        // Set the appropriate headers for the response
-        res.set('Content-Type', response.headers['content-type']);
-        res.send(response.data);
-    } catch (error) {
-        console.error('Error fetching the image:', error);
-        res.status(500).send('Error fetching the image');
-    }
-  });
+app.use(cors());
+
+app.get('/proxy', async (req, res) => {
+  const imageUrl = req.query.url;
+
+  if (!imageUrl) {
+      return res.status(400).send('URL is required');
+  }
+
+  console.log('Proxy URL:', decodeURIComponent(imageUrl));
+
+  try {
+      const response = await axios({
+          url: decodeURIComponent(imageUrl),
+          method: 'GET',
+          responseType: 'arraybuffer' 
+      });
+
+      res.set('Content-Type', response.headers['content-type']);
+      res.send(response.data);
+  } catch (error) {
+      console.error('Error fetching the image:', error);
+      res.status(500).send('Error fetching the image');
+  }
+});
 
 const User = require('./server/models/user');
   
   //SESSION
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'secretKey',
-  resave: false,
-  saveUninitialized: true
-}));
+    secret: process.env.SESSION_SECRET || 'secretKey',
+    resave: false,
+    saveUninitialized: true
+  }));
   
-app.use(passport.initialize());
-app.use(passport.session());
+  app.use(passport.initialize());
+  app.use(passport.session());
 
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
+  passport.serializeUser((user, done) => {
+    done(null, user);
+  });
+  
+  passport.deserializeUser((obj, done) => {
+    done(null, obj);
+  });
 
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
-});
-
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  //callbackURL: 'https://localhost:3000/auth/google/callback',
-  callbackURL: 'https://glacial-coast-30522-eb4abac1d785.herokuapp.com/auth/google/callback'
-},
-(token, tokenSecret, profile, done) => {
-  return done(null, profile);
-}));
+  passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: process.env.REDIRECT_URL,
+  }, (accessToken, refreshToken, profile, done) => {
+    const email = profile.emails[0].value;
+    const googleId = profile.id;
+  
+    pool.query('SELECT * FROM users WHERE google_id = ?', [googleId], (err, rows) => {
+      if (err) return done(err);
+  
+      if (rows.length > 0) {
+        return done(null, rows[0]);
+      } else {
+        pool.query('INSERT INTO users (google_id, email) VALUES (?, ?)', [googleId, email], (err, result) => {
+          if (err) return done(err);
+  
+          pool.query('SELECT * FROM users WHERE id = ?', [result.insertId], (err, newRows) => {
+            if (err) return done(err);
+  
+            return done(null, newRows[0]);
+          });
+        });
+      }
+    });
+  }));
 
 // ROUTE TO START AUTH PROCESS
 app.get('/auth/google',
-passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login', 'email'] })
+passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login.html' }),
+app.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login.html' }), 
   (req, res) => {
-    // Successful authentication, redirect to main website page
-    res.redirect('/graphic-tees');
+    const user = req.user;
+    console.log('User after authentication:', user);
+
+    const userInfo = {
+      username: user.username, // Storing email as username
+    };
+
+    const userInfoStr = Buffer.from(JSON.stringify(userInfo)).toString('base64');
+    res.redirect(`/set-session?user=${userInfoStr}`);
   }
-  );
+);
 
-// app.get('/auth/google/callback',
-//   passport.authenticate('google', { failureRedirect: '/login.html' }),
-//   (req, res) => {
-//     // SUCESSFUL AUTHENTICATION
-//     const googleProfile = req.user;
-
-//     // CHECK IF USER WITH EMAIL ALREADY EXISTS
-//     const checkUserExists = async (email) => {
-//       const existingUser = await User.findOne({
-//         where: { email: email } 
-//       });
-//       return existingUser ? true : false;
-//     };
-
-//     checkUserExists(googleProfile.emails[0].value)
-//       .then(userExists => {
-//         if (userExists) {
-//           console.log('User already exists:', googleProfile.emails[0].value);
-//           res.redirect('/upload.html');
-//         } else {
-//           console.log('New user:', googleProfile.emails[0].value);
-//           // CREATE NEW USER
-//           const newUser = new User({
-//             username: googleProfile.displayName || null, 
-//             email: googleProfile.emails[0].value || null, 
-//           });
-
-//           newUser.save() 
-//             .then(createdUser => {
-//               console.log('User created successfully:', createdUser.dataValues);
-//               res.redirect('/upload.html');
-//             })
-//             .catch(err => {
-//               console.error('Error creating user:', err);
-//               res.status(500).send('Error creating user');
-//             });
-//         }
-//       })
-//       .catch(err => {
-//         console.error('Error checking for existing user:', err);
-//         res.status(500).send('Error logging in');
-//       });
-//   }
-// );
+// Set Session Route
+app.get('/set-session', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'set-session.html'));
+});
 
   // LOGOUT
 app.get('/logout', (req, res) => {
@@ -945,20 +1060,22 @@ res.send(req.user);
 });
 
 app.get('/check-moodboard-name/:username/:name', (req, res) => {
-    const { username, name } = req.params;
-    // Use pool.query to execute the query
-    pool.query(
-        'SELECT * FROM moodboards WHERE user_id = (SELECT id FROM users WHERE username = ?) AND title = ?',
-        [username, name],
-        (err, results) => {
-            if (err) {
-                console.error('Error executing query:', err);
-                return res.status(500).json({ error: 'Error checking moodboard name' });
-            }
-            res.json({ exists: results.length > 0 });
-        }
-    );
-  });
+  const { username, name } = req.params;
+
+  // Use pool.query to execute the query
+  pool.query(
+      'SELECT * FROM moodboards WHERE user_id = (SELECT id FROM users WHERE username = ?) AND title = ?',
+      [username, name],
+      (err, results) => {
+          if (err) {
+              console.error('Error executing query:', err);
+              return res.status(500).json({ error: 'Error checking moodboard name' });
+          }
+
+          res.json({ exists: results.length > 0 });
+      }
+  );
+});
 
 app.get('/finspo', (req, res) => {
   pool.query('SELECT id, image_url FROM finspo', (error, results) => {
@@ -967,7 +1084,6 @@ app.get('/finspo', (req, res) => {
       res.status(500).send('Error fetching images');
       return;
     }
-
     const images = results;
     res.render('finspo', { images });
   });
@@ -980,7 +1096,6 @@ app.get('/minspo', (req, res) => {
       res.status(500).send('Error fetching images');
       return;
     }
-
     const images = results;
     res.render('minspo', { images });
   });
