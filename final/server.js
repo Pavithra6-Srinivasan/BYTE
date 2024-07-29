@@ -166,6 +166,13 @@ app.get('/graphic-tees', (req, res) => {
     query += " AND title LIKE ?";
     params.push(`%${search}%`);
   }
+
+  if (gender) {
+    query += " AND gender = ?";
+    params.push(gender);
+  }
+
+
   if (colour) {
     query += " AND JSON_CONTAINS(colour, ?)";
     params.push(`"${colour}"`);
@@ -178,21 +185,21 @@ app.get('/graphic-tees', (req, res) => {
     query += " AND pricing <= ?";
     params.push(maxPrice);
   }
-  if (gender) {
-    query += " AND gender = ?";
-    params.push(gender);
-  }
 
+  
   pool.query(query, params, (error, results) => {
     if (error) {
       console.error('Error fetching cottonon:', error);
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
       // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
-      res.render('graphic-tees-list', { products: results }, (err, html) => {
+      res.render('graphic-tees-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -202,9 +209,10 @@ app.get('/graphic-tees', (req, res) => {
       });
     } else {
       // IF NOT, FULL PAGE
-      res.render('graphic-tees', { products: results });
+      res.render('graphic-tees', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/sandals', (req, res) => {
@@ -240,10 +248,13 @@ app.get('/sandals', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
       // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
-      res.render('sandals-list', { products: results }, (err, html) => {
+      res.render('sandals-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -253,9 +264,10 @@ app.get('/sandals', (req, res) => {
       });
     } else {
       // IF NOT, FULL PAGE
-      res.render('sandals', { products: results });
+      res.render('sandals', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/shoes', (req, res) => {
@@ -291,10 +303,13 @@ app.get('/shoes', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
       // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
-      res.render('shoes-list', { products: results }, (err, html) => {
+      res.render('shoes-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -304,9 +319,10 @@ app.get('/shoes', (req, res) => {
       });
     } else {
       // IF NOT, FULL PAGE
-      res.render('shoes', { products: results });
+      res.render('shoes', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/jewellery', (req, res) => {
@@ -342,10 +358,13 @@ app.get('/jewellery', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
       // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
-      res.render('jewellery-list', { products: results }, (err, html) => {
+      res.render('jewellery-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -355,9 +374,10 @@ app.get('/jewellery', (req, res) => {
       });
     } else {
       // IF NOT, FULL PAGE
-      res.render('jewellery', { products: results });
+      res.render('jewellery', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/tops', (req, res) => {
@@ -394,9 +414,13 @@ app.get('/tops', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('tops-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('tops-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -405,9 +429,11 @@ app.get('/tops', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('tops', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('tops', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/pants', (req, res) => {
@@ -443,9 +469,13 @@ app.get('/pants', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('pants-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('pants-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -454,9 +484,11 @@ app.get('/pants', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('pants', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('pants', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/dresses', (req, res) => {
@@ -492,9 +524,13 @@ app.get('/dresses', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('dresses-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('dresses-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -503,9 +539,11 @@ app.get('/dresses', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('dresses', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('dresses', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/jeans', (req, res) => {
@@ -541,9 +579,13 @@ app.get('/jeans', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('jeans-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('jeans-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -552,9 +594,11 @@ app.get('/jeans', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('jeans', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('jeans', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/shorts', (req, res) => {
@@ -590,9 +634,13 @@ app.get('/shorts', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('shorts-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('shorts-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -601,9 +649,11 @@ app.get('/shorts', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('shorts', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('shorts', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/skirts', (req, res) => {
@@ -639,9 +689,13 @@ app.get('/skirts', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('skirts-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('skirts-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -650,9 +704,11 @@ app.get('/skirts', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('skirts', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('skirts', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/sweaters', (req, res) => {
@@ -688,9 +744,13 @@ app.get('/sweaters', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('sweaters-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('sweaters-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -699,9 +759,12 @@ app.get('/sweaters', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('sweaters', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('sweaters', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
+ 
 });
 
 app.get('/cardigans', (req, res) => {
@@ -737,9 +800,13 @@ app.get('/cardigans', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('cardigans-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('cardigans-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -748,9 +815,11 @@ app.get('/cardigans', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('cardigans', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('cardigans', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 app.get('/jackets', (req, res) => {
@@ -786,9 +855,13 @@ app.get('/jackets', (req, res) => {
       res.status(500).send('Error fetching cottonon');
       return;
     }
-
+  
+    const selectedGender = req.query.gender || '';
+    const selectedColour = req.query.colour || '';
+  
     if (req.xhr) {
-      res.render('jackets-list', { products: results }, (err, html) => {
+      // IF REQUEST IS AJAX, ONLY THE PRODUCT LIST
+      res.render('jackets-list', { products: results, selectedGender: selectedGender, selectedColour: selectedColour }, (err, html) => {
         if (err) {
           console.error('Error rendering product list:', err);
           res.status(500).send('Error rendering product list');
@@ -797,9 +870,11 @@ app.get('/jackets', (req, res) => {
         res.send(html);
       });
     } else {
-     res.render('jackets', { products: results });
+      // IF NOT, FULL PAGE
+      res.render('jackets', { products: results, selectedGender: selectedGender, selectedColour: selectedColour });
     }
   });
+  
 });
 
 const moodboardsDir = path.join(__dirname, 'moodboards');
