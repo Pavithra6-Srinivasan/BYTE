@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product List</title>
     <link rel="stylesheet" type="text/css" href="/stylebackup.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+<div id="toast-container" class="toast-container"></div>
 <body>
     <h1>JACKETS</h1>
     <div class="filter-sidebar-container">
@@ -19,101 +21,85 @@
         </nav>
         <div id="filter-container">
             <form id="filter-form">
-
                 <div class="search-container">
-                <input class="search-bar" type="text" name="search" placeholder="Search...">
+                    <input class="search-bar" type="text" name="search" placeholder="Search...">
                 </div>
                 
                 <div>
-                <button class="tiny-button">!</button>
-                <div class="hover-message" id="hoverMessage">Select category of clothing first, gender second. Then, proceed to filter colour and price.</div>
-
-                <button onclick="location.href='/graphic-tees'" class="navigation-button">Graphic Tees</button>
-                <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
-                <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
-                <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
-                <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
-                <button onclick="location.href='/jewellery'" class="navigation-button">Jewellery</button>
+                    <button class="tiny-button">!</button>
+                    <div class="hover-message" id="hoverMessage">Select category of clothing first, gender second. Then, proceed to filter colour and price.</div>
+                    <button onclick="location.href='/graphic-tees'" class="navigation-button">Graphic Tees</button>
+                    <button onclick="location.href='/shorts'" class="navigation-button">Shorts</button>
+                    <button onclick="location.href='/skirts'" class="navigation-button">Skirts</button>
+                    <button onclick="location.href='/cardigans'" class="navigation-button">Cardigans</button>
+                    <button onclick="location.href='/jackets'" class="navigation-button">Jackets</button>
+                    <button onclick="location.href='/jewellery'" class="navigation-button">Jewellery</button>
                 </div>
                 <div>
-                <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
-                <button onclick="location.href='/tops'" class="navigation-button">Tops</button>
-                <button onclick="location.href='/pants'" class="navigation-button">Pants</button>
-                <button onclick="location.href='/dresses'" class="navigation-button">Dresses</button>
-                <button onclick="location.href='/jeans'" class="navigation-button">Jeans</button>
-                <button onclick="location.href='/sandals'" class="navigation-button">Sandals</button>
-                <button onclick="location.href='/shoes'" class="navigation-button">Shoes</button>
+                    <button onclick="location.href='/sweaters'" class="navigation-button">Sweater & Fleece</button>
+                    <button onclick="location.href='/tops'" class="navigation-button">Tops</button>
+                    <button onclick="location.href='/pants'" class="navigation-button">Pants</button>
+                    <button onclick="location.href='/dresses'" class="navigation-button">Dresses</button>
+                    <button onclick="location.href='/jeans'" class="navigation-button">Jeans</button>
+                    <button onclick="location.href='/sandals'" class="navigation-button">Sandals</button>
+                    <button onclick="location.href='/shoes'" class="navigation-button">Shoes</button>
                 </div>
 
                 <div id="gender-buttons">
-                    <button class="girl" onclick="filterGender('female')">FEMALE</button>
-                    <button class="boy" onclick="filterGender('male')">MALE</button>
-                  </div>
+                    <button class="girl" type="button" onclick="selectGender('female')">FEMALE</button>
+                    <button class="boy" type="button" onclick="selectGender('male')">MALE</button>
+                </div>
 
                 <div>
-                <select name="colour">
-                    <option value="">All Colours</option>
-                    <option value="red">red</option>
-                    <option value="blue">blue</option>
-                    <option value="white">white</option>
-                    <option value="pink">pink</option>
-                    <option value="black">black</option>
-                    <option value="beige">beige</option>
-                    <option value="green">green</option>
-                    <option value="grey">grey</option>
-                    <option value="off-white">off-white</option>
-                    <option value="navy">navy</option>
-                    <option value="brown">brown</option>
-                    <option value="multi">multi</option>
-                </select>
+                    <select name="colour">
+                        <option value="">All Colours</option>
+                        <option value="red">red</option>
+                        <option value="blue">blue</option>
+                        <option value="white">white</option>
+                        <option value="pink">pink</option>
+                        <option value="black">black</option>
+                        <option value="beige">beige</option>
+                        <option value="green">green</option>
+                        <option value="grey">grey</option>
+                        <option value="off-white">off-white</option>
+                        <option value="navy">navy</option>
+                        <option value="brown">brown</option>
+                        <option value="multi">multi</option>
+                    </select>
 
-                <input type="number" name="minPrice" placeholder="Min Price">
-                <input type="number" name="maxPrice" placeholder="Max Price">
-                
-                <button type="submit">Filter</button>
+                    <input type="number" name="minPrice" placeholder="Min Price">
+                    <input type="number" name="maxPrice" placeholder="Max Price">
+                    
+                    <button type="submit">Filter</button>
                 </div>
             </form>           
         </div>
     </div>
-    
+
     <div style="padding-left: 80px;" id="jackets-list">
         <% products.forEach(product => { %>
-            <div class="product-item" data-image-url="<%= product.img %>">
-                <h3><%= product.title.replace('Go to product: ', '') %></h3>
-                <a href="<%= product.urlpg %>" target="_blank">
-                    <img src="<%= product.img %>" alt="<%= product.title %>">
-                </a>
-                <p>S$<%= product.pricing %></p>
-                <div class="color-list">
-                    <% JSON.parse(product.colour).forEach(colour => { %>
-                        <span class="color-item"><%= colour %></span>
-                    <% }); %>
+            <% if ((!selectedGender || product.gender === selectedGender) && 
+                   (!selectedColour || JSON.parse(product.colour).includes(selectedColour))) { %>
+                <div class="product-item" data-image-url="<%= product.img %>">
+                    <h3><%= product.title.replace('Go to product: ', '') %></h3>
+                    <a href="<%= product.urlpg %>" target="_blank">
+                        <img src="<%= product.img %>" alt="<%= product.title %>">
+                    </a>
+                    <p>S$<%= product.pricing %></p>
+                    <div class="color-list">
+                        <% JSON.parse(product.colour).forEach(colour => { %>
+                            <span class="color-item"><%= colour %></span>
+                        <% }); %>
+                    </div>
+                    <button class="add-to-new-moodboard navigation-button" data-image-url="<%= product.img %>">ADD</button>
                 </div>
-                <button class="add-to-new-moodboard navigation-button" data-image-url="<%= product.img %>">ADD</button>
-            </div>
+            <% } %>
         <% }); %>
+        
     </div>
-   
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
         $(document).ready(function() {
-   
-
-            $('.add-to-new-moodboard').click(function(event) {
-                event.preventDefault();
-                const imageUrl = $(this).data('image-url');
-                // Create an image object
-                const imageObject = { src: imageUrl };
-                // Retrieve existing images from sessionStorage, or initialize an empty array
-                let newMoodboardImages = JSON.parse(sessionStorage.getItem('newMoodboardImages')) || [];
-                // Add the new image object to the array
-                newMoodboardImages.push(imageObject);
-                // Save the updated array back to sessionStorage
-                sessionStorage.setItem('newMoodboardImages', JSON.stringify(newMoodboardImages));
-                showToast('Image added to new moodboard', 'success');
-            });
-
             $('#filter-form').submit(function(event) {
                 event.preventDefault();
                 const formData = $(this).serialize();
@@ -128,41 +114,53 @@
                     }
                 });
             });
+
+            window.selectGender = function(gender) {
+                $('input[name="gender"]').remove();
+                $('#filter-form').append(`<input type="hidden" name="gender" value="${gender}">`);
+                $('#filter-form').submit();
+            };
+
+            $('.add-to-new-moodboard').click(function(event) {
+                event.preventDefault();
+                const imageUrl = $(this).data('image-url');
+                const imageObject = { src: imageUrl };
+                let newMoodboardImages = JSON.parse(sessionStorage.getItem('newMoodboardImages')) || [];
+                newMoodboardImages.push(imageObject);
+                sessionStorage.setItem('newMoodboardImages', JSON.stringify(newMoodboardImages));
+                showToast('Image added to new moodboard', 'success');
+            });
+
+            function checkSessionStorage() {
+                const username = sessionStorage.getItem('username');
+                if (!username) {
+                    window.location.href = '/login.html';
+                }
+            }
+            document.addEventListener('DOMContentLoaded', checkSessionStorage);
         });
-        function filterGender(gender) {
-            window.location.href = `/jackets?gender=${gender}`;
-        }
 
         function showToast(message, type) {
-        let toastContainer = document.getElementById('toast-container');
+            let toastContainer = document.getElementById('toast-container');
 
-        if (!toastContainer) {
-            toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            toastContainer.className = 'toast-container';
-            document.body.appendChild(toastContainer);
-        }
-
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        toast.innerText = message;
-        toastContainer.appendChild(toast);
-        toast.classList.add('show');
-
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
-    }
-    function checkSessionStorage() {
-            const username = sessionStorage.getItem('username');
-            if (!username) {
-                window.location.href = '/login.html'; 
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'toast-container';
+                document.body.appendChild(toastContainer);
             }
-        }
 
-        document.addEventListener('DOMContentLoaded', checkSessionStorage);
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = message;
+            toastContainer.appendChild(toast);
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
     </script>
-        <script src="script.js"></script>
 </body>
 </html>
